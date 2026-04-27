@@ -990,27 +990,6 @@ import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/fir
 import { getFirestore, collection, addDoc, serverTimestamp }
                             from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ══════════════════════════════════════════════════════
-//  ⚙️  REEMPLAZÁ con los datos de tu proyecto Firebase
-// ══════════════════════════════════════════════════════
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyDOUfs8bixzLU8_lH726JOqlyNPqOMWAbM",
-  authDomain: "inscripciones-secundaria-25477.firebaseapp.com",
-  projectId: "inscripciones-secundaria-25477",
-  storageBucket: "inscripciones-secundaria-25477.firebasestorage.app",
-  messagingSenderId: "284569368518",
-  appId: "1:284569368518:web:a357c006b165236da4a4c7"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-// ══════════════════════════════════════════════════════
 
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
