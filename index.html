@@ -544,12 +544,12 @@ function buildFieldValues(ins) {
   tx('Text22', ins.telefonoFijo); tx('Text92', ins.celular);
 
   // Otros datos
-  cb('SI_4', chk(ins.tieneHermanos)); cb('NO tiene hermanas o hermanos', !chk(ins.tieneHermanos));
+  cb('SI_4', chk(ins.tieneHermanos)); cb('NO tiene hermanas o hermanos', ins.tieneHermanos != null && !chk(ins.tieneHermanos));
   tx('Text86', ins.cantHermanos); tx('Text87', ins.cantHermanosEscuela);
-  cb('SI_7', chk(ins.auh)); cb('NO_7', !chk(ins.auh));
-  cb('SI_8', chk(ins.progresar)); cb('NO_8', !chk(ins.progresar));
-  cb('SI_3', chk(ins.pueblosOriginarios)); cb('NO_4', !chk(ins.pueblosOriginarios));
-  cb('SI_2', chk(ins.lenguasDistintas)); cb('NO_3', !chk(ins.lenguasDistintas));
+  cb('SI_7', chk(ins.auh)); cb('NO_7', ins.auh != null && !chk(ins.auh));
+  cb('SI_8', chk(ins.progresar)); cb('NO_8', ins.progresar != null && !chk(ins.progresar));
+  cb('SI_3', chk(ins.pueblosOriginarios)); cb('NO_4', ins.pueblosOriginarios != null && !chk(ins.pueblosOriginarios));
+  cb('SI_2', chk(ins.lenguasDistintas)); cb('NO_3', ins.lenguasDistintas != null && !chk(ins.lenguasDistintas));
 
   // Transporte
   const tr = t(ins.transporte).toLowerCase();
@@ -562,7 +562,7 @@ function buildFieldValues(ins) {
   cb('Otro',                     tr.includes('otro'));
 
   // Obra social
-  cb('SI_11.0', chk(ins.obraSocial)); cb('NO_11', !chk(ins.obraSocial));
+  cb('SI_11.0', chk(ins.obraSocial)); cb('NO_11', ins.obraSocial != null && !chk(ins.obraSocial));
   tx('Text94', ins.nombreObraSocial); tx('Text95', ins.nroAfiliado);
 
   // Salud
@@ -585,17 +585,19 @@ function buildFieldValues(ins) {
     ['Problemas cardíacos',                     'Check Box8.1.0','Check Box8.1.1'],
   ];
   saludMap.forEach(([col, cbSI, cbNO]) => {
-    const esSI = s[col] === 'SI';
-    cb(cbSI, esSI); cb(cbNO, !esSI);
+    const val = s[col]; // puede ser 'SI', 'NO', o undefined (no respondido)
+    cb(cbSI, val === 'SI');
+    cb(cbNO, val === 'NO'); // solo marca NO si explícitamente fue respondido como NO
   });
 
   // Medicación / operación
-  cb('SI_15', chk(ins.medicacion));
+  cb('SI_15', chk(ins.medicacion));   // NO de medicación no existe como campo en el PDF
   tx('undefined_45', ins.cualMedicacion);
-  cb('SI_16', chk(ins.operacion)); cb('NO_16', !chk(ins.operacion));
+  cb('SI_16', chk(ins.operacion));
+  cb('NO_16', ins.operacion != null && !chk(ins.operacion));
   tx('undefined_46', ins.motivoOperacion);
-  cb('SI_17', chk(ins.dismAuditiva));
-  cb('SI_19', chk(ins.dismVisual));
+  cb('SI_17', chk(ins.dismAuditiva)); // NO de auditiva no existe como campo separado
+  cb('SI_19', chk(ins.dismVisual));   // NO de visual no existe como campo separado
 
   // Inscripción
   const ciclo = t(ins.ciclo);
