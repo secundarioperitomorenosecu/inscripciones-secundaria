@@ -278,16 +278,20 @@ import { getFirestore, collection, getDocs, doc, updateDoc, query, orderBy }
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged }
                                    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
+// ══════════════════════════════════════════════════════════════
+//  ⚙️  REEMPLAZÁ CON LOS DATOS DE TU NUEVO PROYECTO FIREBASE
+// ══════════════════════════════════════════════════════════════
 const firebaseConfig = {
-  apiKey: "AIzaSyDOUfs8bixzLU8_lH726JOqlyNPqOMWAbM",
-  authDomain: "inscripciones-secundaria-25477.firebaseapp.com",
-  projectId: "inscripciones-secundaria-25477",
-  storageBucket: "inscripciones-secundaria-25477.firebasestorage.app",
-  messagingSenderId: "284569368518",
-  appId: "1:284569368518:web:a357c006b165236da4a4c7"
+  apiKey:            "TU_API_KEY",
+  authDomain:        "TU_PROYECTO.firebaseapp.com",
+  projectId:         "TU_PROYECTO_ID",
+  storageBucket:     "TU_PROYECTO.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId:             "TU_APP_ID"
 };
-
-const EMAIL_AUTORIZADO = "secundarioperitomoreno@gmail.com";
+// Email habilitado para acceder al panel
+const EMAIL_AUTORIZADO = "TU_EMAIL@gmail.com";
+// ══════════════════════════════════════════════════════════════
 
 const app  = initializeApp(firebaseConfig);
 const db   = getFirestore(app);
@@ -538,7 +542,8 @@ function buildFieldValues(ins) {
   tx('Text12', ins.calle); tx('Text13', ins.numero); tx('Text15', ins.piso);
   tx('Text17', ins.depto); tx('Text18', ins.localidad); tx('Text90', ins.distrito);
   tx('Text19', ins.entreCalle); tx('Text20', ins.yCalle);
-  tx('Text22', ins.telefonoFijo); tx('Text92', ins.celular);
+  tx('Text22', [ins.telFijoCod, ins.telFijo].filter(Boolean).join(' '));
+  tx('Text92', [ins.celularCod, ins.celular].filter(Boolean).join(' '));
 
   // Otros datos
   cb('SI_4', chk(ins.tieneHermanos)); cb('NO tiene hermanas o hermanos', !chk(ins.tieneHermanos));
@@ -587,7 +592,7 @@ function buildFieldValues(ins) {
   });
 
   // Medicación / operación
-  cb('SI_15', chk(ins.medicacion));
+  cb('SI_15', chk(ins.medicacion)); cb('NO_15', !chk(ins.medicacion));
   tx('undefined_45', ins.cualMedicacion);
   cb('SI_16', chk(ins.operacion)); cb('NO_16', !chk(ins.operacion));
   tx('undefined_46', ins.motivoOperacion);
@@ -619,9 +624,24 @@ function buildFieldValues(ins) {
   cb('Madre', v1==='Madre'); cb('Padre', v1==='Padre');
   cb('Tutor', v1==='Tutor'); cb('Tutora', v1==='Tutora'); cb('Otro_2', v1==='Otro');
   tx('Text3', ins.r1apellido); tx('Text7', ins.r1nombre);
-  tx('Text4', ins.r1nacionalidad); tx('Text16', ins.r1dni);
+  tx('Text4', ins.r1nac); tx('Text16', ins.r1dni);
   tx('Text25', ins.r1ocupacion);
-  tx('Text47', ins.r1telefonoFijo || ''); tx('Text48', ins.r1celular);
+  cb('SI_37', chk(ins.r1asistioEduc)); cb('NO_37', !chk(ins.r1asistioEduc));
+  const r1nivel = t(ins.r1nivelEduc);
+  cb('Primario',                r1nivel === 'Primario');
+  cb('Secundario',              r1nivel === 'Secundario');
+  cb('Superior',                r1nivel === 'Superior');
+  cb('Superior Universitario',  r1nivel === 'Superior Universitario');
+  cb('Posgrado',                r1nivel === 'Posgrado');
+  cb('SI_38', chk(ins.r1completoNivel)); cb('NO_38', !chk(ins.r1completoNivel));
+  const r1act = t(ins.r1actividad);
+  cb('Estudia',                         r1act.includes('Estudia'));
+  cb('Trabaja',                         r1act.includes('Trabaja'));
+  cb('Busca trabajo',                   r1act.includes('Busca trabajo'));
+  cb('Realiza tareas de cuidado no pagas', r1act.includes('cuidado'));
+  cb('Recibe jubilación o pensión',     r1act.includes('jubilaci'));
+  tx('Text47', [ins.r1telFijoCod, ins.r1telFijo].filter(Boolean).join(' '));
+  tx('Text48', [ins.r1celularCod, ins.r1celular].filter(Boolean).join(' '));
   tx('Text49', ins.r1email);
   cb('SI_36', chk(ins.r1convive || 'SI')); cb('NO_36', !chk(ins.r1convive || 'SI'));
 
@@ -631,7 +651,21 @@ function buildFieldValues(ins) {
   cb('Tutor_2', v2==='Tutor'); cb('Tutora_2', v2==='Tutora'); cb('Otro_3', v2==='Otro');
   tx('Text59', ins.r2apellido); tx('Text57', ins.r2nombre);
   tx('Text58', ins.r2dni);
-  tx('Text72', ins.r2celular); tx('Text76', ins.r2email);
+  cb('SI_39', chk(ins.r2asistioEduc)); cb('NO_39', !chk(ins.r2asistioEduc));
+  const r2nivel = t(ins.r2nivelEduc);
+  cb('Primario_2',                r2nivel === 'Primario');
+  cb('Secundario_2',              r2nivel === 'Secundario');
+  cb('Superior_2',                r2nivel === 'Superior');
+  cb('Superior Universitario_2',  r2nivel === 'Superior Universitario');
+  cb('Posgrado_2',                r2nivel === 'Posgrado');
+  cb('SI_40', chk(ins.r2completoNivel)); cb('NO_40', !chk(ins.r2completoNivel));
+  const r2act = t(ins.r2actividad);
+  cb('Estudia_2',                         r2act.includes('Estudia'));
+  cb('Trabaja_2',                         r2act.includes('Trabaja'));
+  cb('Busca trabajo_2',                   r2act.includes('Busca trabajo'));
+  cb('Realiza tareas de cuidado no pagas_2', r2act.includes('cuidado'));
+  cb('Recibe jubilación o pensión_2',     r2act.includes('jubilaci'));
+  tx('Text72', [ins.r2celularCod, ins.r2celular].filter(Boolean).join(' ')); tx('Text76', ins.r2email);
 
   return fv;
 }
