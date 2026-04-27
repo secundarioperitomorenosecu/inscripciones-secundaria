@@ -3,721 +3,1247 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel de Inscripciones — Directivo</title>
+<title>Inscripción Escolar — Educación Secundaria</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --azul: #1a3a6b; --azul-claro: #2557b0; --celeste: #e8f0ff;
-    --acento: #c8960c; --gris: #f4f5f8; --borde: #d0d7e6;
-    --texto: #1c2333; --error: #c0392b; --ok: #1a7a4a;
-    --sidebar: 260px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--gris); color: var(--texto); min-height: 100vh; }
-
-  /* LOGIN */
-  #loginScreen {
-    min-height: 100vh; display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, var(--azul) 0%, #0d2244 100%);
-  }
-  .login-card {
-    background: white; border-radius: 16px; padding: 48px 40px; width: 380px;
-    text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  }
-  .login-card .logo { font-size: 48px; margin-bottom: 16px; }
-  .login-card h1 { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--azul); margin-bottom: 6px; }
-  .login-card p { font-size: 0.85rem; color: #888; margin-bottom: 32px; line-height: 1.5; }
-  .btn-google {
-    width: 100%; padding: 14px; border: 2px solid var(--borde); border-radius: 10px;
-    background: white; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
-    font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 12px;
-    transition: all 0.2s; color: var(--texto);
-  }
-  .btn-google:hover { border-color: var(--azul-claro); background: var(--celeste); }
-  .btn-google img { width: 20px; }
-  .login-error { color: var(--error); font-size: 0.82rem; margin-top: 12px; display: none; }
-
-  /* APP */
-  #appScreen { display: none; }
-
-  /* SIDEBAR */
-  .sidebar {
-    position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar);
-    background: var(--azul); color: white; display: flex; flex-direction: column; z-index: 50;
-  }
-  .sidebar-logo { padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-  .sidebar-logo .escudo { font-size: 28px; margin-bottom: 8px; }
-  .sidebar-logo h2 { font-family: 'DM Serif Display', serif; font-size: 1rem; font-weight: 400; line-height: 1.3; }
-  .sidebar-logo p { font-size: 0.72rem; opacity: 0.6; margin-top: 2px; }
-  .sidebar-nav { flex: 1; padding: 16px 0; }
-  .nav-item {
-    display: flex; align-items: center; gap: 10px; padding: 12px 20px;
-    cursor: pointer; transition: background 0.15s; font-size: 0.9rem; opacity: 0.8;
-  }
-  .nav-item:hover { background: rgba(255,255,255,0.1); opacity: 1; }
-  .nav-item.active { background: rgba(255,255,255,0.15); opacity: 1; border-right: 3px solid var(--acento); }
-  .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
-  .user-info { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--acento); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
-  .user-name { font-size: 0.8rem; opacity: 0.85; }
-  .btn-logout { width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.8rem; transition: background 0.15s; }
-  .btn-logout:hover { background: rgba(255,255,255,0.2); }
-
-  /* MAIN */
-  .main { margin-left: var(--sidebar); min-height: 100vh; }
-  .topbar { background: white; border-bottom: 1px solid var(--borde); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
-  .topbar h1 { font-family: 'DM Serif Display', serif; font-size: 1.3rem; font-weight: 400; }
-  .topbar-actions { display: flex; gap: 10px; align-items: center; }
-
-  .content { padding: 28px 32px; }
-
-  /* STATS */
-  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
-  .stat-card { background: white; border-radius: 10px; padding: 20px; border: 1px solid var(--borde); }
-  .stat-card .num { font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--azul); }
-  .stat-card .label { font-size: 0.78rem; color: #888; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
-  .stat-card .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
-  .dot-pendiente { background: var(--acento); }
-  .dot-procesada { background: var(--ok); }
-
-  /* FILTROS */
-  .filtros { background: white; border-radius: 10px; border: 1px solid var(--borde); padding: 16px 20px; margin-bottom: 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-  .filtros input, .filtros select {
-    border: 1.5px solid var(--borde); border-radius: 6px; padding: 8px 12px;
-    font-family: 'DM Sans', sans-serif; font-size: 0.88rem; background: white; color: var(--texto);
-  }
-  .filtros input { flex: 1; min-width: 200px; }
-  .filtros input:focus, .filtros select:focus { outline: none; border-color: var(--azul-claro); }
-  .btn-primary { padding: 9px 18px; background: var(--azul); color: white; border: none; border-radius: 6px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500; transition: background 0.15s; }
-  .btn-primary:hover { background: var(--azul-claro); }
-  .btn-acento { padding: 9px 18px; background: var(--acento); color: white; border: none; border-radius: 6px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500; transition: opacity 0.15s; }
-  .btn-acento:hover { opacity: 0.88; }
-  .btn-sm { padding: 6px 12px; font-size: 0.82rem; }
-
-  /* TABLA */
-  .tabla-wrap { background: white; border-radius: 10px; border: 1px solid var(--borde); overflow: hidden; }
-  table { width: 100%; border-collapse: collapse; }
-  thead { background: var(--azul); color: white; }
-  th { padding: 12px 16px; text-align: left; font-size: 0.76rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
-  td { padding: 12px 16px; font-size: 0.88rem; border-bottom: 1px solid var(--borde); }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--celeste); }
-  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
-  .badge-pendiente { background: #fff3cd; color: #856404; }
-  .badge-procesada { background: #d1e7dd; color: #0a3622; }
-  .td-actions { display: flex; gap: 6px; }
-  .btn-pdf { padding: 6px 14px; background: var(--azul); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: background 0.15s; white-space: nowrap; }
-  .btn-pdf:hover { background: var(--azul-claro); }
-  .btn-pdf:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-ver { padding: 6px 14px; background: white; color: var(--azul); border: 1.5px solid var(--borde); border-radius: 5px; cursor: pointer; font-size: 0.8rem; transition: all 0.15s; }
-  .btn-ver:hover { border-color: var(--azul); }
-
-  .empty-state { text-align: center; padding: 60px 24px; color: #aaa; }
-  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
-  .empty-state p { font-size: 0.9rem; }
-
-  /* MODAL DETALLE */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; padding: 24px; }
-  .modal-overlay.open { display: flex; }
-  .modal { background: white; border-radius: 12px; width: 100%; max-width: 640px; max-height: 85vh; overflow-y: auto; }
-  .modal-header { background: var(--azul); color: white; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-radius: 12px 12px 0 0; position: sticky; top: 0; }
-  .modal-header h2 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 1.1rem; }
-  .modal-close { background: none; border: none; color: white; font-size: 1.4rem; cursor: pointer; opacity: 0.7; }
-  .modal-close:hover { opacity: 1; }
-  .modal-body { padding: 24px; }
-  .detail-section { margin-bottom: 20px; }
-  .detail-section h4 { font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--azul-claro); border-bottom: 2px solid var(--celeste); padding-bottom: 6px; margin-bottom: 12px; }
-  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .detail-item { background: var(--gris); border-radius: 6px; padding: 8px 12px; }
-  .detail-item .key { font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 0.04em; }
-  .detail-item .val { font-size: 0.9rem; font-weight: 500; margin-top: 2px; }
-  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--borde); display: flex; gap: 10px; justify-content: flex-end; position: sticky; bottom: 0; background: white; border-radius: 0 0 12px 12px; }
-
-  /* TOAST */
-  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--azul); color: white; padding: 12px 20px; border-radius: 8px; font-size: 0.88rem; transform: translateY(80px); transition: transform 0.3s; z-index: 999; }
-  .toast.show { transform: translateY(0); }
-  .toast.error { background: var(--error); }
-  .toast.ok { background: var(--ok); }
-
-  /* LOADING */
-  .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+:root{--az:#1a3a6b;--azc:#2557b0;--cel:#e8f0ff;--ac:#c8960c;--gr:#f4f5f8;--bo:#d0d7e6;--tx:#1c2333;--er:#c0392b;--ok:#1a7a4a;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--gr);color:var(--tx);min-height:100vh;}
+header{background:var(--az);color:#fff;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3);}
+.hi{max-width:920px;margin:0 auto;padding:15px 22px;display:flex;align-items:center;gap:13px;}
+.es{width:42px;height:42px;background:var(--ac);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.ht h1{font-family:'DM Serif Display',serif;font-size:1rem;font-weight:400;line-height:1.2;}
+.ht p{font-size:.72rem;opacity:.7;margin-top:2px;}
+.pb{background:rgba(255,255,255,.15);height:4px;}
+.pf{height:100%;background:var(--ac);transition:width .4s;width:0%;}
+.con{max-width:920px;margin:0 auto;padding:26px 18px 80px;}
+.ic{background:#fff;border-left:4px solid var(--ac);border-radius:8px;padding:16px 20px;margin-bottom:24px;display:flex;gap:13px;}
+.ii{font-size:24px;flex-shrink:0;}
+.ic h2{font-family:'DM Serif Display',serif;font-size:.97rem;margin-bottom:4px;}
+.ic p{font-size:.83rem;color:#555;line-height:1.6;}
+/* Secciones */
+.sec{background:#fff;border-radius:10px;border:1px solid var(--bo);margin-bottom:20px;overflow:hidden;}
+.sh{background:var(--az);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:10px;}
+.sn{background:var(--ac);color:#fff;width:23px;height:23px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:600;flex-shrink:0;}
+.sh h3{font-family:'DM Serif Display',serif;font-weight:400;font-size:.95rem;}
+.sb{padding:20px;}
+/* Grillas */
+.g{display:grid;gap:13px;}
+.g2{grid-template-columns:1fr 1fr;}
+.g3{grid-template-columns:1fr 1fr 1fr;}
+.g4{grid-template-columns:1fr 1fr 1fr 1fr;}
+.full{grid-column:1/-1;}
+/* Campos */
+.c label{display:block;font-size:.71rem;font-weight:600;color:var(--az);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+.c label .r{color:var(--er);}
+.c input[type=text],.c input[type=date],.c input[type=email],.c input[type=tel],.c select,.c textarea{
+  width:100%;border:1.5px solid var(--bo);border-radius:6px;padding:9px 11px;
+  font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--tx);background:#fff;
+  transition:border-color .2s,box-shadow .2s;appearance:none;-webkit-appearance:none;}
+.c input:focus,.c select:focus{outline:none;border-color:var(--azc);box-shadow:0 0 0 3px rgba(37,87,176,.12);}
+.c input.err,.c select.err{border-color:var(--er);background:#fff5f5;}
+.c .h{font-size:.7rem;color:#999;margin-top:3px;}
+/* SI/NO */
+.sg{display:flex;gap:6px;margin-top:3px;}
+.sb2{flex:1;padding:8px;border:1.5px solid var(--bo);border-radius:6px;background:var(--gr);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;transition:all .15s;text-align:center;}
+.sb2:hover{border-color:var(--azc);}
+.sb2.ss{background:#e8f5ed!important;border-color:var(--ok)!important;color:var(--ok)!important;font-weight:700!important;box-shadow:0 0 0 2px var(--ok)!important;}
+.sb2.ns{background:#fdecea!important;border-color:var(--er)!important;color:var(--er)!important;font-weight:700!important;box-shadow:0 0 0 2px var(--er)!important;}
+/* Checkboxes */
+.cg{display:flex;flex-wrap:wrap;gap:6px;margin-top:3px;}
+.co{display:flex;align-items:center;gap:6px;background:var(--gr);border:1.5px solid var(--bo);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:.83rem;user-select:none;transition:all .15s;}
+.co:has(input:checked){border-color:var(--azc);background:var(--cel);color:var(--az);font-weight:500;}
+.co input{accent-color:var(--azc);width:14px;height:14px;}
+/* Separador y subsección */
+.sep{border:none;border-top:1px solid var(--bo);margin:16px 0;}
+.sub{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--azc);margin-bottom:11px;padding-bottom:5px;border-bottom:2px solid var(--cel);}
+/* Tabla salud */
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.ti{display:flex;justify-content:space-between;align-items:center;padding:6px 9px;background:var(--gr);border-radius:5px;font-size:.79rem;gap:6px;}
+.sm{display:flex;gap:4px;flex-shrink:0;}
+.sm label{display:flex;align-items:center;gap:3px;cursor:pointer;font-size:.75rem;font-weight:600;padding:3px 7px;border-radius:4px;border:1px solid var(--bo);background:#fff;white-space:nowrap;}
+.sm label:has(input:checked){background:var(--cel);border-color:var(--azc);color:var(--az);}
+/* Domicilio responsable colapsable */
+.domr{background:var(--cel);border:1px solid var(--azc);border-radius:8px;padding:16px;margin-top:12px;display:none;}
+.domr .sub{color:var(--az);}
+/* Fila con cod área */
+.tel-row{display:flex;gap:8px;}
+.tel-row .cod{width:100px;flex-shrink:0;}
+/* Botón enviar */
+.benv{width:100%;padding:15px;background:var(--az);color:#fff;border:none;border-radius:10px;font-family:'DM Serif Display',serif;font-size:1.05rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:26px;}
+.benv:hover{background:var(--azc);transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,58,107,.3);}
+.benv:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+/* Éxito */
+.ok2{display:none;text-align:center;padding:52px 22px;background:#fff;border-radius:12px;border:2px solid var(--ok);}
+.ok2 .grd{font-size:56px;margin-bottom:12px;}
+.ok2 h2{font-family:'DM Serif Display',serif;font-size:1.55rem;color:var(--ok);margin-bottom:10px;}
+.ok2 p{color:#555;font-size:.9rem;line-height:1.7;}
+.rn{font-size:1.4rem;font-family:'DM Serif Display',serif;color:var(--az);display:block;margin-top:8px;}
+/* Toast */
+.tst{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--er);color:#fff;padding:11px 22px;border-radius:8px;font-size:.85rem;transition:transform .3s;z-index:999;white-space:nowrap;}
+.tst.show{transform:translateX(-50%) translateY(0);}
+@media(max-width:640px){.g2,.g3,.g4{grid-template-columns:1fr;}.tg{grid-template-columns:1fr;}.con{padding:12px 10px 80px;}}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="loginScreen">
-  <div class="login-card">
-    <div class="logo">🏫</div>
-    <h1>Panel de Inscripciones</h1>
-    <p>Acceso exclusivo para personal directivo.<br>Iniciá sesión con tu cuenta de Google autorizada.</p>
-    <button class="btn-google" id="btnGoogle">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-      Ingresar con Google
-    </button>
-    <p class="login-error" id="loginError">⚠ Tu cuenta no tiene acceso. Contactá al administrador.</p>
+<header>
+  <div class="hi">
+    <div class="es">🏫</div>
+    <div class="ht">
+      <h1>Solicitud de Inscripción — Educación Secundaria</h1>
+      <p>Completá todos los campos. Los marcados con * son obligatorios.</p>
+    </div>
+  </div>
+  <div class="pb"><div class="pf" id="pgr"></div></div>
+</header>
+
+<div class="con">
+<div class="ic"><div class="ii">📋</div><div>
+  <h2>Antes de empezar</h2>
+  <p>Completá el formulario con los datos del/la estudiante y los/las responsables. Al terminar, la escuela recibirá la solicitud automáticamente. <strong>No hace falta imprimir nada.</strong></p>
+</div></div>
+
+<form id="f" novalidate>
+
+<!-- ═══════════════════════════════════════════════════════════
+     1. DATOS DEL/LA ESTUDIANTE
+═══════════════════════════════════════════════════════════ -->
+<div class="sec">
+<div class="sh"><div class="sn">1</div><h3>Datos del/la Estudiante</h3></div>
+<div class="sb">
+  <div class="g g2">
+    <div class="c"><label>Apellido/s <span class="r">*</span></label><input type="text" id="apellido" required placeholder="Ej: GARCIA LOPEZ"></div>
+    <div class="c"><label>Nombre/s <span class="r">*</span></label><input type="text" id="nombre" required placeholder="Ej: María Fernanda"></div>
+    <div class="c"><label>Fecha de Nacimiento <span class="r">*</span></label><input type="date" id="fechaNac" required></div>
+    <div class="c">
+      <label>Identidad de Género <span class="r">*</span></label>
+      <select id="genero" required>
+        <option value="">Seleccioná...</option>
+        <option value="Mujer">Mujer</option>
+        <option value="Mujer trans / travesti">Mujer trans / travesti</option>
+        <option value="Varón">Varón</option>
+        <option value="Varón trans / masculinidad trans">Varón trans / masculinidad trans</option>
+        <option value="No binario">No binario</option>
+        <option value="Otra">Otra</option>
+        <option value="No desea responder">No desea responder</option>
+      </select>
+    </div>
+  </div>
+
+  <hr class="sep">
+  <div class="sub">Documento</div>
+  <div class="g g2">
+    <div class="c">
+      <label>Lugar de Nacimiento <span class="r">*</span></label>
+      <select id="lugarNac" required>
+        <option value="">Seleccioná...</option>
+        <option value="Argentina">En Argentina</option>
+        <option value="Extranjero">En el extranjero</option>
+      </select>
+    </div>
+    <div class="c"><label>Nacionalidad</label><input type="text" id="nacionalidad" placeholder="Ej: Argentina"></div>
+    <div class="c" id="grpProvNac">
+      <label>Provincia (si nació en Argentina)</label>
+      <select id="provinciaNac">
+        <option value="Buenos Aires">Buenos Aires</option>
+        <option value="Otra">Otra (especificar)</option>
+      </select>
+    </div>
+
+    <div class="c full">
+      <label>¿Posee DNI argentino? <span class="r">*</span></label>
+      <select id="tieneDni" required>
+        <option value="">Seleccioná...</option>
+        <option value="Sí, tiene DNI físico">Sí, y tiene el DNI físico</option>
+        <option value="Sí, en trámite">Sí, pero NO tiene el DNI físico y se encuentra en trámite</option>
+        <option value="Sí, sin trámite">Sí, pero NO tiene el DNI físico y NO está en trámite</option>
+        <option value="No">No posee DNI argentino</option>
+      </select>
+    </div>
+    <div class="c"><label>N° de DNI argentino</label><input type="text" id="numeroDni" placeholder="Ej: 44123456"></div>
+    <div class="c"><label>CUIL</label><input type="text" id="cuil" placeholder="Ej: 27-44123456-7"></div>
+
+    <!-- Solo si NO tiene DNI -->
+    <div class="c" id="grpCpi" style="display:none">
+      <label>¿Posee Certificado de Pre-Identificación (CPI)?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="tieneCpi" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="tieneCpi" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="tieneCpi" value="">
+    </div>
+    <div class="c" id="grpDocExt" style="display:none">
+      <label>¿Posee documento extranjero?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="tieneDocExt" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="tieneDocExt" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="tieneDocExt" value="">
+    </div>
+    <div class="c" id="grpDocExtDetalle" style="display:none">
+      <label>Tipo de documento extranjero</label>
+      <input type="text" id="tipoDocExt" placeholder="Ej: Pasaporte">
+    </div>
+    <div class="c" id="grpNroDocExt" style="display:none">
+      <label>N° de documento extranjero</label>
+      <input type="text" id="nroDocExt" placeholder="N°">
+    </div>
+  </div>
+
+  <hr class="sep">
+  <div class="sub">Solo estudiantes de 14 años y más</div>
+  <div class="g g2">
+    <div class="c">
+      <label>¿Tiene hijos/as menores de 3 años?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="hijosmenores" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="hijosmenores" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="hijosmenores" value="">
+    </div>
+    <div class="c" id="grpSalaMaternal" style="display:none">
+      <label>¿Asisten a una Sala del Proyecto de Salas Maternales?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="salaMaternal" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="salaMaternal" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="salaMaternal" value="">
+    </div>
   </div>
 </div>
+</div>
 
-<!-- APP -->
-<div id="appScreen">
-  <div class="sidebar">
-    <div class="sidebar-logo">
-      <div class="escudo">🏫</div>
-      <h2>Panel de Inscripciones</h2>
-      <p>Educación Secundaria</p>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-item active" data-view="inscripciones">📋 Inscripciones</div>
-      <div class="nav-item" data-view="estadisticas">📊 Estadísticas</div>
-    </nav>
-    <div class="sidebar-footer">
-      <div class="user-info">
-        <div class="user-avatar" id="userAvatar">D</div>
-        <div class="user-name" id="userName">Directivo</div>
-      </div>
-      <button class="btn-logout" id="btnLogout">Cerrar sesión</button>
-    </div>
+<!-- ═══════════════════════════════════════════════════════════
+     2. DOMICILIO DEL/LA ESTUDIANTE
+═══════════════════════════════════════════════════════════ -->
+<div class="sec">
+<div class="sh"><div class="sn">2</div><h3>Domicilio del/la Estudiante</h3></div>
+<div class="sb">
+  <div class="g g3">
+    <div class="c full"><label>Calle <span class="r">*</span></label><input type="text" id="calle" required placeholder="Nombre de la calle"></div>
+    <div class="c"><label>N°</label><input type="text" id="numero" placeholder="Ej: 1234"></div>
+    <div class="c"><label>Piso</label><input type="text" id="piso" placeholder="Ej: 3"></div>
+    <div class="c"><label>Torre</label><input type="text" id="torre" placeholder="Ej: A"></div>
+    <div class="c"><label>Depto</label><input type="text" id="depto" placeholder="Ej: 4B"></div>
+    <div class="c"><label>Entre calle</label><input type="text" id="entreCalle" placeholder="Calle 1"></div>
+    <div class="c"><label>Y calle</label><input type="text" id="yCalle" placeholder="Calle 2"></div>
+    <div class="c"><label>Otro dato</label><input type="text" id="otroDato" placeholder="Referencia"></div>
+    <div class="c"><label>Provincia</label><input type="text" id="provincia" placeholder="Ej: Buenos Aires"></div>
+    <div class="c"><label>Partido / Distrito</label><input type="text" id="distrito" placeholder="Ej: La Matanza"></div>
+    <div class="c"><label>Localidad <span class="r">*</span></label><input type="text" id="localidad" required placeholder="Ej: Ramos Mejía"></div>
   </div>
-
-  <div class="main">
-    <div class="topbar">
-      <h1 id="viewTitle">Inscripciones recibidas</h1>
-      <div class="topbar-actions">
-        <button class="btn-acento" id="btnDescargarTodos" style="display:none">⬇ Descargar todos los PDFs</button>
+  <hr class="sep">
+  <div class="g g2">
+    <div class="c">
+      <label>Teléfono fijo</label>
+      <div class="tel-row">
+        <input type="text" id="telFijoCod" class="cod" placeholder="Cód. área">
+        <input type="text" id="telFijo" placeholder="Número">
       </div>
     </div>
-
-    <div class="content">
-      <!-- STATS -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="num" id="statTotal">—</div>
-          <div class="label">Total recibidas</div>
-        </div>
-        <div class="stat-card">
-          <div class="num" id="statHoy">—</div>
-          <div class="label">Hoy</div>
-        </div>
-        <div class="stat-card">
-          <div class="num" id="statPendientes">—</div>
-          <div class="label"><span class="dot dot-pendiente"></span>Pendientes</div>
-        </div>
-        <div class="stat-card">
-          <div class="num" id="statProcesadas">—</div>
-          <div class="label"><span class="dot dot-procesada"></span>Procesadas</div>
-        </div>
-      </div>
-
-      <!-- FILTROS -->
-      <div class="filtros">
-        <input type="text" id="filtroTexto" placeholder="🔍 Buscar por apellido, nombre o DNI...">
-        <select id="filtroEstado">
-          <option value="">Todos los estados</option>
-          <option value="pendiente">Pendiente</option>
-          <option value="procesada">Procesada</option>
-        </select>
-        <select id="filtroTurno">
-          <option value="">Todos los turnos</option>
-          <option value="Mañana">Mañana</option>
-          <option value="Tarde">Tarde</option>
-          <option value="Vespertino">Vespertino</option>
-          <option value="Noche">Noche</option>
-        </select>
-        <button class="btn-primary" id="btnRefresh">↺ Actualizar</button>
-      </div>
-
-      <!-- TABLA -->
-      <div class="tabla-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Apellido y Nombre</th>
-              <th>DNI</th>
-              <th>Año / Turno</th>
-              <th>Responsable</th>
-              <th>Celular</th>
-              <th>Fecha</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tablaBody"></tbody>
-        </table>
-        <div class="empty-state" id="emptyState" style="display:none">
-          <div class="icon">📭</div>
-          <p>No hay inscripciones que coincidan con los filtros.</p>
-        </div>
+    <div class="c">
+      <label>Teléfono celular</label>
+      <div class="tel-row">
+        <input type="text" id="celularCod" class="cod" placeholder="Cód. área">
+        <input type="text" id="celular" placeholder="Número">
       </div>
     </div>
   </div>
 </div>
+</div>
 
-<!-- MODAL DETALLE -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
-    <div class="modal-header">
-      <h2 id="modalTitulo">Detalle de Inscripción</h2>
-      <button class="modal-close" id="modalClose">✕</button>
+<!-- ═══════════════════════════════════════════════════════════
+     3. OTROS DATOS
+═══════════════════════════════════════════════════════════ -->
+<div class="sec">
+<div class="sh"><div class="sn">3</div><h3>Otros Datos</h3></div>
+<div class="sb">
+  <div class="g g2">
+    <div class="c">
+      <label>¿Tiene hermanas o hermanos?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="tieneHermanos" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="tieneHermanos" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="tieneHermanos" value="">
     </div>
-    <div class="modal-body" id="modalBody"></div>
-    <div class="modal-footer">
-      <button class="btn-ver" id="modalBtnProcesada">✓ Marcar como procesada</button>
-      <button class="btn-pdf" id="modalBtnPDF">⬇ Descargar PDF</button>
+    <div class="c" id="grpHermanos" style="display:none">
+      <label>Cantidad total</label>
+      <input type="text" id="cantHermanos" placeholder="Ej: 2">
+      <label style="margin-top:8px">Cantidad que asiste a este establecimiento</label>
+      <input type="text" id="cantHermanosEsc" placeholder="Ej: 1">
+    </div>
+
+    <div class="c full">
+      <label>¿Se hablan lenguas distintas al castellano en el hogar?</label>
+      <div class="sg" style="max-width:260px">
+        <button type="button" class="sb2" data-f="lenguasDistintas" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="lenguasDistintas" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="lenguasDistintas" value="">
+    </div>
+    <div class="c" id="grpLenguaIndigena" style="display:none">
+      <label>¿Lengua/s indígena/s?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="lenguaIndigena" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="lenguaIndigena" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="lenguaIndigena" value="">
+    </div>
+    <div class="c" id="grpOtraLengua" style="display:none">
+      <label>¿Otra/s lengua/s?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="otraLengua" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="otraLengua" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="otraLengua" value="">
+    </div>
+
+    <div class="c">
+      <label>¿Se reconoce perteneciente o descendiente de Pueblos Originarios?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="pueblosOriginarios" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="pueblosOriginarios" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="pueblosOriginarios" value="">
+    </div>
+    <div class="c">
+      <label>Percibe Asignación Universal por Hijo (AUH)</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="auh" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="auh" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="auh" value="">
+    </div>
+    <div class="c">
+      <label>Percibe Progresar</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="progresar" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="progresar" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="progresar" value="">
+    </div>
+
+    <div class="c full">
+      <label>Medio de transporte (marcá todas las que correspondan)</label>
+      <div class="cg">
+        <label class="co"><input type="checkbox" name="transporte" value="A pie/Bicicleta"> A pie / Bicicleta</label>
+        <label class="co"><input type="checkbox" name="transporte" value="Transporte escolar DGCyE"> Transporte escolar DGCyE</label>
+        <label class="co"><input type="checkbox" name="transporte" value="Colectivo"> Colectivo</label>
+        <label class="co"><input type="checkbox" name="transporte" value="Tren"> Tren</label>
+        <label class="co"><input type="checkbox" name="transporte" value="Vehículo particular"> Vehículo particular</label>
+        <label class="co"><input type="checkbox" name="transporte" value="Taxi/Remis"> Taxi / Remis</label>
+        <label class="co"><input type="checkbox" name="transporte" value="Otro"> Otro</label>
+      </div>
     </div>
   </div>
 </div>
+</div>
 
-<div class="toast" id="toast"></div>
+<!-- ═══════════════════════════════════════════════════════════
+     4. INFORMACIÓN DE SALUD
+═══════════════════════════════════════════════════════════ -->
+<div class="sec">
+<div class="sh"><div class="sn">4</div><h3>Información de Salud</h3></div>
+<div class="sb">
+
+  <!-- Obra social -->
+  <div class="g g2" style="margin-bottom:16px">
+    <div class="c">
+      <label>¿Posee obra social?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="obraSocial" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="obraSocial" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="obraSocial" value="">
+    </div>
+    <div class="c" id="grpObraSocial" style="display:none">
+      <label>Nombre de la obra social</label>
+      <input type="text" id="nombreObraSocial" placeholder="Ej: OSDE">
+      <label style="margin-top:7px">N° de Afiliado</label>
+      <input type="text" id="nroAfiliado" placeholder="N° afiliado">
+    </div>
+  </div>
+
+  <!-- Antecedentes personales -->
+  <div class="sub">Antecedentes Personales de Salud</div>
+  <p style="font-size:.78rem;color:#777;margin-bottom:10px">¿Padece o ha padecido alguna de las siguientes condiciones? (Marcá SI o NO)</p>
+  <div class="tg" id="grSalud"></div>
+
+  <hr class="sep">
+
+  <!-- Ejercicio -->
+  <div class="sub">En relación con el Ejercicio</div>
+  <p style="font-size:.78rem;color:#777;margin-bottom:10px">¿Ha padecido alguna vez durante o después de la actividad física?</p>
+  <div class="tg" id="grEjercicio"></div>
+
+  <hr class="sep">
+
+  <!-- Internaciones -->
+  <div class="sub">Internaciones</div>
+  <p style="font-size:.78rem;color:#777;margin-bottom:10px">Marcá SI o NO y en caso afirmativo completá cuántas veces y la causa</p>
+  <div class="tg" style="margin-bottom:10px">
+    <div class="ti">
+      <span>Internación en sala común</span>
+      <div class="sm">
+        <label><input type="radio" name="internComun" value="SI"> SI</label>
+        <label><input type="radio" name="internComun" value="NO" checked> NO</label>
+      </div>
+    </div>
+    <div class="ti">
+      <span>Internación en cuidados intermedios/intensivos</span>
+      <div class="sm">
+        <label><input type="radio" name="internIntensivos" value="SI"> SI</label>
+        <label><input type="radio" name="internIntensivos" value="NO" checked> NO</label>
+      </div>
+    </div>
+  </div>
+  <div class="g g2" id="grpInternacion" style="display:none">
+    <div class="c"><label>¿Cuántas veces?</label><input type="text" id="cantInternaciones" placeholder="Ej: 2"></div>
+    <div class="c"><label>Causa/s o diagnóstico/s</label><input type="text" id="causaInternacion" placeholder="Descripción"></div>
+  </div>
+
+  <hr class="sep">
+
+  <!-- Alergias -->
+  <div class="sub">Alergias</div>
+  <div class="g g2" style="margin-bottom:12px">
+    <div class="c">
+      <label>¿Padece o ha padecido algún tipo de alergia grave?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="tieneAlergia" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="tieneAlergia" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="tieneAlergia" value="">
+    </div>
+  </div>
+  <div id="grpAlergias" style="display:none">
+    <p style="font-size:.78rem;color:#777;margin-bottom:8px">Para cada tipo indicá SI/NO y si requirió internación</p>
+    <div id="grAlergias"></div>
+  </div>
+
+  <hr class="sep">
+
+  <!-- Medicación y operación -->
+  <div class="sub">Medicación y Cirugías</div>
+  <div class="g g2">
+    <div class="c">
+      <label>¿Recibe de manera habitual algún tipo de medicación?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="medicacion" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="medicacion" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="medicacion" value="">
+    </div>
+    <div class="c" id="grpMedicacion" style="display:none">
+      <label>¿Cuál medicación?</label>
+      <input type="text" id="cualMedicacion" placeholder="Nombre del medicamento">
+    </div>
+    <div class="c">
+      <label>¿Tuvo alguna operación?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="operacion" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="operacion" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="operacion" value="">
+    </div>
+    <div class="c" id="grpOperacion" style="display:none">
+      <label>¿Por qué motivo?</label>
+      <input type="text" id="motivoOperacion" placeholder="Motivo">
+      <label style="margin-top:7px">¿En qué año?</label>
+      <input type="text" id="anioOperacion" placeholder="Ej: 2021">
+    </div>
+  </div>
+
+  <hr class="sep">
+
+  <!-- Visión y audición -->
+  <div class="sub">Visión y Audición</div>
+  <div class="g g2">
+    <div class="c">
+      <label>¿Tiene disminución auditiva?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="dismAuditiva" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="dismAuditiva" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="dismAuditiva" value="">
+    </div>
+    <div class="c" id="grpAudifonos" style="display:none">
+      <label>¿Usa audífonos?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="usaAudifonos" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="usaAudifonos" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="usaAudifonos" value="">
+    </div>
+    <div class="c">
+      <label>¿Tiene disminución visual?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="dismVisual" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="dismVisual" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="dismVisual" value="">
+    </div>
+    <div class="c" id="grpLentes" style="display:none">
+      <label>¿Usa lentes?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="usaLentes" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="usaLentes" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="usaLentes" value="">
+    </div>
+  </div>
+
+  <hr class="sep">
+
+  <!-- Antecedentes familiares -->
+  <div class="sub">Antecedentes Familiares de Salud</div>
+  <p style="font-size:.78rem;color:#777;margin-bottom:10px">¿Algún familiar directo padece o ha padecido alguna de las siguientes condiciones?</p>
+  <div class="tg" id="grFamiliar"></div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     5. INSCRIPCIÓN
+═══════════════════════════════════════════════════════════ -->
+<div class="sec">
+<div class="sh"><div class="sn">5</div><h3>Datos de Inscripción</h3></div>
+<div class="sb">
+  <div class="g g2">
+    <div class="c">
+      <label>Se inscribe en (Ciclo) <span class="r">*</span></label>
+      <select id="ciclo" required>
+        <option value="">Seleccioná...</option>
+        <option value="Ciclo Básico">Ciclo Básico</option>
+        <option value="Ciclo Superior">Ciclo Superior</option>
+        <option value="Aula de Fortalecimiento">Aula de Fortalecimiento</option>
+        <option value="Escuela Profesional Secundaria">Escuela Profesional Secundaria</option>
+      </select>
+    </div>
+    <div class="c">
+      <label>Orientación</label>
+      <input type="text" id="orientacion" placeholder="Ej: Ciencias Sociales">
+    </div>
+    <div class="c">
+      <label>Año <span class="r">*</span></label>
+      <select id="anio" required>
+        <option value="">Seleccioná...</option>
+        <option value="1">1°</option><option value="2">2°</option><option value="3">3°</option>
+        <option value="4">4°</option><option value="5">5°</option><option value="6">6°</option><option value="7">7°</option>
+      </select>
+    </div>
+    <div class="c">
+      <label>Turno solicitado <span class="r">*</span></label>
+      <select id="turno" required>
+        <option value="">Seleccioná...</option>
+        <option value="Mañana">Mañana</option>
+        <option value="Tarde">Tarde</option>
+        <option value="Vespertino">Vespertino</option>
+        <option value="Noche">Noche</option>
+      </select>
+    </div>
+    <div class="c">
+      <label>Jornada</label>
+      <select id="jornada">
+        <option value="">Seleccioná...</option>
+        <option value="Simple">Simple</option>
+        <option value="Extendida">Extendida</option>
+        <option value="Completa">Completa / Doble escolaridad</option>
+      </select>
+    </div>
+    <div class="c">
+      <label>Condición en la inscripción <span class="r">*</span></label>
+      <select id="condicion" required>
+        <option value="">Seleccioná...</option>
+        <option value="Ingresante al Nivel">Ingresante al Nivel</option>
+        <option value="Promovido">Promovida / Promovido</option>
+        <option value="Reinscripto">Reinscripta / Reinscripto</option>
+        <option value="Repitente">Repitente</option>
+      </select>
+    </div>
+  </div>
+
+  <hr class="sep">
+  <div class="sub">Establecimiento de Procedencia <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:.85em">(solo si el año pasado o este año asistió a otro establecimiento)</span></div>
+  <div class="g g2">
+    <div class="c">
+      <label>País</label>
+      <select id="procPais">
+        <option value="Argentina">Argentina</option>
+        <option value="Otro">Otro país (especificar)</option>
+      </select>
+    </div>
+    <div class="c">
+      <label>Provincia</label>
+      <select id="procProvincia">
+        <option value="Buenos Aires">Buenos Aires</option>
+        <option value="Otra">Otra (especificar)</option>
+      </select>
+    </div>
+    <div class="c"><label>Distrito</label><input type="text" id="procDistrito" placeholder="Ej: La Matanza"></div>
+    <div class="c"><label>Nivel / Modalidad</label><input type="text" id="procNivel" placeholder="Ej: Primaria"></div>
+    <div class="c">
+      <label>Sector de gestión</label>
+      <select id="procSector">
+        <option value="">Seleccioná...</option>
+        <option value="Estatal">Estatal</option>
+        <option value="Privado">Privado</option>
+      </select>
+    </div>
+    <div class="c">
+      <label>Dependencia</label>
+      <select id="procDependencia">
+        <option value="">Seleccioná...</option>
+        <option value="Oficial">Oficial</option>
+        <option value="Municipal">Municipal</option>
+        <option value="Nacional">Nacional</option>
+        <option value="Privada">Privada</option>
+        <option value="Otros organismos">Otros organismos</option>
+      </select>
+    </div>
+    <div class="c"><label>Nombre del establecimiento</label><input type="text" id="procEscuela" placeholder="Ej: EP N°18"></div>
+  </div>
+
+  <hr class="sep">
+  <div class="sub">Inclusión y Educación Complementaria</div>
+  <div class="g g2">
+    <div class="c">
+      <label>¿Cursa con proyecto de inclusión?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="proyectoInclusion" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="proyectoInclusion" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="proyectoInclusion" value="">
+    </div>
+    <div class="c" id="grpTipoInclusion" style="display:none">
+      <label>Tipo</label>
+      <select id="tipoInclusion">
+        <option value="Con Escuela Especial a contraturno">Concurre a Escuela Especial a contraturno + acompañamiento</option>
+        <option value="Sin Escuela Especial con acompañamiento">No concurre a Escuela Especial + acompañamiento</option>
+      </select>
+    </div>
+    <div class="c">
+      <label>¿Cursa con acompañante asistente externo?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="acompAsistente" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="acompAsistente" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="acompAsistente" value="">
+    </div>
+    <div class="c">
+      <label>¿Asiste a Centro Educativo Complementario (CEC)?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="asisteCec" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="asisteCec" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="asisteCec" value="">
+    </div>
+    <div class="c">
+      <label>¿Asiste a Centro de Educación Física (CEF)?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="asisteCef" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="asisteCef" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="asisteCef" value="">
+    </div>
+    <div class="c">
+      <label>¿Asiste a Escuela de Educación Estética?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="asisteEstetica" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="asisteEstetica" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="asisteEstetica" value="">
+    </div>
+  </div>
+
+  <hr class="sep">
+  <div class="sub">Servicio Alimentario Escolar</div>
+  <div class="c">
+    <label>¿Solicita la incorporación al Servicio Alimentario? (marcá lo que corresponda)</label>
+    <div class="cg">
+      <label class="co"><input type="checkbox" name="servAlim" value="Comedor"> Comedor</label>
+      <label class="co"><input type="checkbox" name="servAlim" value="Desayuno y Merienda"> Desayuno y Merienda</label>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     6. RESPONSABLE 1
+═══════════════════════════════════════════════════════════ -->
+<div class="sec">
+<div class="sh"><div class="sn">6</div><h3>Datos de la Persona Responsable 1</h3></div>
+<div class="sb">
+  <div class="g g2">
+    <div class="c">
+      <label>Vínculo con el/la estudiante <span class="r">*</span></label>
+      <select id="r1vinculo" required>
+        <option value="">Seleccioná...</option>
+        <option value="Madre">Madre</option><option value="Padre">Padre</option>
+        <option value="Tutor">Tutor</option><option value="Tutora">Tutora</option><option value="Otro">Otro</option>
+      </select>
+    </div>
+    <div class="c"><label>Apellido/s <span class="r">*</span></label><input type="text" id="r1apellido" required placeholder="Apellido"></div>
+    <div class="c"><label>Nombre/s <span class="r">*</span></label><input type="text" id="r1nombre" required placeholder="Nombre"></div>
+    <div class="c"><label>Nacionalidad</label><input type="text" id="r1nac" placeholder="Ej: Argentina"></div>
+
+    <div class="c">
+      <label>¿Posee DNI argentino?</label>
+      <select id="r1tieneDni">
+        <option value="Sí, tiene DNI físico">Sí, y tiene el DNI físico</option>
+        <option value="Sí, sin físico">Sí, pero NO tiene el DNI físico</option>
+        <option value="No">No posee DNI argentino</option>
+      </select>
+    </div>
+    <div class="c"><label>N° de DNI</label><input type="text" id="r1dni" placeholder="Ej: 28987654"></div>
+
+    <div class="c">
+      <label>¿Posee CPI? (si no tiene DNI argentino)</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="r1tieneCpi" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="r1tieneCpi" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="r1tieneCpi" value="">
+    </div>
+    <div class="c">
+      <label>¿Posee documento extranjero?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="r1tieneDocExt" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="r1tieneDocExt" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="r1tieneDocExt" value="">
+    </div>
+    <div class="c" id="grpR1DocExt" style="display:none">
+      <label>Tipo documento extranjero</label>
+      <input type="text" id="r1tipoDocExt" placeholder="Ej: Pasaporte">
+    </div>
+    <div class="c" id="grpR1NroDocExt" style="display:none">
+      <label>N° documento extranjero</label>
+      <input type="text" id="r1nroDocExt" placeholder="N°">
+    </div>
+
+    <div class="c"><label>Profesión u Ocupación</label><input type="text" id="r1ocupacion" placeholder="Ej: Empleada"></div>
+    <div class="c">
+      <label>¿Asistió a algún establecimiento educativo?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="r1asistioEduc" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="r1asistioEduc" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="r1asistioEduc" value="">
+    </div>
+    <div class="c" id="grpR1Nivel">
+      <label>Nivel más alto que cursó</label>
+      <select id="r1nivelEduc">
+        <option value="">Seleccioná...</option>
+        <option value="Primario">Primario</option>
+        <option value="Secundario">Secundario</option>
+        <option value="Superior">Superior</option>
+        <option value="Superior Universitario">Superior Universitario</option>
+        <option value="Posgrado">Posgrado</option>
+      </select>
+    </div>
+    <div class="c">
+      <label>¿Completó ese nivel?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="r1completoNivel" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="r1completoNivel" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="r1completoNivel" value="">
+    </div>
+
+    <div class="c full">
+      <label>Condición de actividad (marcá todas las que correspondan)</label>
+      <div class="cg">
+        <label class="co"><input type="checkbox" name="r1act" value="Estudia"> Estudia</label>
+        <label class="co"><input type="checkbox" name="r1act" value="Trabaja"> Trabaja</label>
+        <label class="co"><input type="checkbox" name="r1act" value="Busca trabajo"> Busca trabajo</label>
+        <label class="co"><input type="checkbox" name="r1act" value="Realiza tareas de cuidado no pagas"> Tareas de cuidado no pagas</label>
+        <label class="co"><input type="checkbox" name="r1act" value="Recibe jubilación o pensión"> Recibe jubilación o pensión</label>
+      </div>
+    </div>
+  </div>
+
+  <hr class="sep">
+  <div class="sub">Domicilio del Responsable 1</div>
+  <div class="g g2" style="margin-bottom:12px">
+    <div class="c full">
+      <label>¿Convive con el/la estudiante?</label>
+      <div class="sg" style="max-width:300px">
+        <button type="button" class="sb2 ss" data-f="r1convive" data-v="SI">✓ Sí (no completar domicilio)</button>
+        <button type="button" class="sb2" data-f="r1convive" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="r1convive" value="SI">
+    </div>
+  </div>
+  <div id="grpR1Dom" class="domr">
+    <div class="sub">Domicilio propio del Responsable 1</div>
+    <div class="g g3">
+      <div class="c full"><label>Calle</label><input type="text" id="r1calle" placeholder="Nombre de la calle"></div>
+      <div class="c"><label>N°</label><input type="text" id="r1numero"></div>
+      <div class="c"><label>Piso</label><input type="text" id="r1piso"></div>
+      <div class="c"><label>Torre</label><input type="text" id="r1torre"></div>
+      <div class="c"><label>Depto</label><input type="text" id="r1depto"></div>
+      <div class="c"><label>Entre calle</label><input type="text" id="r1entreCalle"></div>
+      <div class="c"><label>Y calle</label><input type="text" id="r1yCalle"></div>
+      <div class="c"><label>Otro dato</label><input type="text" id="r1otroDato"></div>
+      <div class="c"><label>Provincia</label><input type="text" id="r1provincia"></div>
+      <div class="c"><label>Partido / Distrito</label><input type="text" id="r1distrito"></div>
+      <div class="c"><label>Localidad</label><input type="text" id="r1localidad"></div>
+    </div>
+  </div>
+  <div class="g g2" style="margin-top:14px">
+    <div class="c">
+      <label>Teléfono fijo</label>
+      <div class="tel-row">
+        <input type="text" id="r1telFijoCod" class="cod" placeholder="Cód. área">
+        <input type="text" id="r1telFijo" placeholder="Número">
+      </div>
+    </div>
+    <div class="c">
+      <label>Teléfono celular <span class="r">*</span></label>
+      <div class="tel-row">
+        <input type="text" id="r1celularCod" class="cod" placeholder="Cód. área">
+        <input type="text" id="r1celular" required placeholder="Número">
+      </div>
+    </div>
+    <div class="c"><label>Correo electrónico</label><input type="email" id="r1email" placeholder="correo@ejemplo.com"></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     7. RESPONSABLE 2
+═══════════════════════════════════════════════════════════ -->
+<div class="sec">
+<div class="sh"><div class="sn">7</div><h3>Datos de la Persona Responsable 2 <span style="font-size:.8rem;font-weight:300;opacity:.7">(opcional)</span></h3></div>
+<div class="sb">
+  <div class="g g2">
+    <div class="c">
+      <label>Vínculo con el/la estudiante</label>
+      <select id="r2vinculo">
+        <option value="">Seleccioná...</option>
+        <option value="Madre">Madre</option><option value="Padre">Padre</option>
+        <option value="Tutor">Tutor</option><option value="Tutora">Tutora</option><option value="Otro">Otro</option>
+      </select>
+    </div>
+    <div class="c"><label>Apellido/s</label><input type="text" id="r2apellido" placeholder="Apellido"></div>
+    <div class="c"><label>Nombre/s</label><input type="text" id="r2nombre" placeholder="Nombre"></div>
+    <div class="c"><label>Nacionalidad</label><input type="text" id="r2nac" placeholder="Ej: Argentina"></div>
+    <div class="c">
+      <label>¿Posee DNI argentino?</label>
+      <select id="r2tieneDni">
+        <option value="Sí, tiene DNI físico">Sí, y tiene el DNI físico</option>
+        <option value="Sí, sin físico">Sí, pero NO tiene el DNI físico</option>
+        <option value="No">No posee DNI argentino</option>
+      </select>
+    </div>
+    <div class="c"><label>N° de DNI</label><input type="text" id="r2dni" placeholder="Ej: 26543210"></div>
+    <div class="c">
+      <label>¿Posee CPI?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="r2tieneCpi" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="r2tieneCpi" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="r2tieneCpi" value="">
+    </div>
+    <div class="c">
+      <label>¿Posee documento extranjero?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="r2tieneDocExt" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="r2tieneDocExt" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="r2tieneDocExt" value="">
+    </div>
+    <div class="c" id="grpR2DocExt" style="display:none">
+      <label>Tipo documento extranjero</label>
+      <input type="text" id="r2tipoDocExt" placeholder="Ej: Pasaporte">
+    </div>
+    <div class="c" id="grpR2NroDocExt" style="display:none">
+      <label>N° documento extranjero</label>
+      <input type="text" id="r2nroDocExt" placeholder="N°">
+    </div>
+    <div class="c"><label>Profesión u Ocupación</label><input type="text" id="r2ocupacion" placeholder="Ej: Operario"></div>
+    <div class="c">
+      <label>¿Asistió a algún establecimiento educativo?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="r2asistioEduc" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="r2asistioEduc" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="r2asistioEduc" value="">
+    </div>
+    <div class="c">
+      <label>Nivel más alto que cursó</label>
+      <select id="r2nivelEduc">
+        <option value="">Seleccioná...</option>
+        <option value="Primario">Primario</option>
+        <option value="Secundario">Secundario</option>
+        <option value="Superior">Superior</option>
+        <option value="Superior Universitario">Superior Universitario</option>
+        <option value="Posgrado">Posgrado</option>
+      </select>
+    </div>
+    <div class="c">
+      <label>¿Completó ese nivel?</label>
+      <div class="sg">
+        <button type="button" class="sb2" data-f="r2completoNivel" data-v="SI">✓ Sí</button>
+        <button type="button" class="sb2" data-f="r2completoNivel" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="r2completoNivel" value="">
+    </div>
+    <div class="c full">
+      <label>Condición de actividad</label>
+      <div class="cg">
+        <label class="co"><input type="checkbox" name="r2act" value="Estudia"> Estudia</label>
+        <label class="co"><input type="checkbox" name="r2act" value="Trabaja"> Trabaja</label>
+        <label class="co"><input type="checkbox" name="r2act" value="Busca trabajo"> Busca trabajo</label>
+        <label class="co"><input type="checkbox" name="r2act" value="Realiza tareas de cuidado no pagas"> Tareas de cuidado no pagas</label>
+        <label class="co"><input type="checkbox" name="r2act" value="Recibe jubilación o pensión"> Recibe jubilación o pensión</label>
+      </div>
+    </div>
+  </div>
+
+  <hr class="sep">
+  <div class="sub">Domicilio del Responsable 2</div>
+  <div class="g g2" style="margin-bottom:12px">
+    <div class="c full">
+      <label>¿Convive con el/la estudiante?</label>
+      <div class="sg" style="max-width:300px">
+        <button type="button" class="sb2 ss" data-f="r2convive" data-v="SI">✓ Sí (no completar domicilio)</button>
+        <button type="button" class="sb2" data-f="r2convive" data-v="NO">✗ No</button>
+      </div>
+      <input type="hidden" id="r2convive" value="SI">
+    </div>
+  </div>
+  <div id="grpR2Dom" class="domr">
+    <div class="sub">Domicilio propio del Responsable 2</div>
+    <div class="g g3">
+      <div class="c full"><label>Calle</label><input type="text" id="r2calle" placeholder="Nombre de la calle"></div>
+      <div class="c"><label>N°</label><input type="text" id="r2numero"></div>
+      <div class="c"><label>Piso</label><input type="text" id="r2piso"></div>
+      <div class="c"><label>Torre</label><input type="text" id="r2torre"></div>
+      <div class="c"><label>Depto</label><input type="text" id="r2depto"></div>
+      <div class="c"><label>Entre calle</label><input type="text" id="r2entreCalle"></div>
+      <div class="c"><label>Y calle</label><input type="text" id="r2yCalle"></div>
+      <div class="c"><label>Otro dato</label><input type="text" id="r2otroDato"></div>
+      <div class="c"><label>Provincia</label><input type="text" id="r2provincia"></div>
+      <div class="c"><label>Partido / Distrito</label><input type="text" id="r2distrito"></div>
+      <div class="c"><label>Localidad</label><input type="text" id="r2localidad"></div>
+    </div>
+  </div>
+  <div class="g g2" style="margin-top:14px">
+    <div class="c">
+      <label>Teléfono fijo</label>
+      <div class="tel-row">
+        <input type="text" id="r2telFijoCod" class="cod" placeholder="Cód. área">
+        <input type="text" id="r2telFijo" placeholder="Número">
+      </div>
+    </div>
+    <div class="c">
+      <label>Teléfono celular</label>
+      <div class="tel-row">
+        <input type="text" id="r2celularCod" class="cod" placeholder="Cód. área">
+        <input type="text" id="r2celular" placeholder="Número">
+      </div>
+    </div>
+    <div class="c"><label>Correo electrónico</label><input type="email" id="r2email" placeholder="correo@ejemplo.com"></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     8. RESTRICCIONES JUDICIALES
+═══════════════════════════════════════════════════════════ -->
+<div class="sec">
+<div class="sh"><div class="sn">8</div><h3>Restricciones por Decisiones Judiciales <span style="font-size:.8rem;font-weight:300;opacity:.7">(si corresponde)</span></h3></div>
+<div class="sb">
+  <p style="font-size:.8rem;color:#777;margin-bottom:14px">La restricción solo operará en caso de acompañarse la resolución judicial certificada.</p>
+  <div class="g g2">
+    <div class="c"><label>Apellido/s</label><input type="text" id="restApellido" placeholder="Apellido de quien tiene restricción"></div>
+    <div class="c"><label>Nombre/s</label><input type="text" id="restNombre" placeholder="Nombre"></div>
+    <div class="c"><label>Tipo de documento</label><input type="text" id="restTipoDoc" placeholder="Ej: DNI"></div>
+    <div class="c"><label>N° de documento</label><input type="text" id="restNroDoc" placeholder="N°"></div>
+    <div class="c full"><label>Descripción de la restricción</label>
+      <textarea id="restDescripcion" rows="2" style="width:100%;border:1.5px solid var(--bo);border-radius:6px;padding:9px 11px;font-family:'DM Sans',sans-serif;font-size:.88rem;resize:vertical" placeholder="Describí la restricción judicial"></textarea>
+    </div>
+  </div>
+</div>
+</div>
+
+<button type="submit" class="benv" id="btnEnv">
+  <span id="btnTxt">📨 Enviar Solicitud de Inscripción</span>
+</button>
+</form>
+
+<div class="ok2" id="exito">
+  <div class="grd">✅</div>
+  <h2>¡Solicitud enviada!</h2>
+  <p>Los datos fueron registrados correctamente.<br>La escuela se comunicará con ustedes.<br><br>
+  <strong>Número de referencia:</strong><span class="rn" id="refNum"></span></p>
+</div>
+</div>
+<div class="tst" id="toast"></div>
 
 <script type="module">
-import { initializeApp }           from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, updateDoc, query, orderBy }
-                                   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged }
-                                   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, serverTimestamp }
+                            from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ══════════════════════════════════════════════════════════════
-//  ⚙️  CONFIGURACIÓN FIREBASE
-// ══════════════════════════════════════════════════════════════
+
 const firebaseConfig = {
-  apiKey:            "AIzaSyDOUfs8bixzLU8_lH726JOqlyNPqOMWAbM",
-  authDomain:        "inscripciones-secundaria-25477.firebaseapp.com",
-  projectId:         "inscripciones-secundaria-25477",
-  storageBucket:     "inscripciones-secundaria-25477.firebasestorage.app",
+  apiKey: "AIzaSyDOUfs8bixzLU8_lH726JOqlyNPqOMWAbM",
+  authDomain: "inscripciones-secundaria-25477.firebaseapp.com",
+  projectId: "inscripciones-secundaria-25477",
+  storageBucket: "inscripciones-secundaria-25477.firebasestorage.app",
   messagingSenderId: "284569368518",
-  appId:             "1:284569368518:web:a357c006b165236da4a4c7"
+  appId: "1:284569368518:web:a357c006b165236da4a4c7"
 };
-const EMAIL_AUTORIZADO = "secundarioperitomoreno@gmail.com";
-// ══════════════════════════════════════════════════════════════
 
-const app  = initializeApp(firebaseConfig);
-const db   = getFirestore(app);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
 
-let inscripciones = [];
-let docSeleccionado = null;
+// ── DATOS PARA GRILLAS DINÁMICAS ──────────────────────
+const COND_SALUD = [
+  "Asma / Broncoespasmos a repetición",
+  "Celiaquía",
+  "Problemas / Condiciones cardíacas",
+  "Diabetes",
+  "Presión arterial elevada",
+  "Convulsiones",
+  "Alteraciones sanguíneas",
+  "Quemaduras moderadas o severas",
+  "Falta o no funcionamiento de algún órgano",
+  "Enfermedad oncohematológica",
+  "Inmunodeficiencias (bajas defensas) por enfermedad o medicamentos",
+  "Fracturas, luxaciones, lesiones ligamentarias previas",
+  "Otro problema en los huesos o articulaciones",
+  "Traumatismo de cráneo con observación en guardia o internación",
+  "Problemas de piel"
+];
+const COND_EJERCICIO = [
+  "Desmayos",
+  "Dolor fuerte en el pecho",
+  "Mareos",
+  "Mayor cansancio que sus compañeros/as",
+  "Palpitaciones",
+  "Dificultad para respirar durante o después de la actividad física"
+];
+const COND_FAMILIAR = [
+  "Muerte súbita de un familiar directo menor de 50 años",
+  "Diabetes",
+  "Problemas cardíacos",
+  "Tos crónica",
+  "Celiaquía"
+];
+const TIPOS_ALERGIA = [
+  "Medicamentos","Vacunas","Alimentos",
+  "Picaduras de Insectos","Estacionales (Polen, ácaros, polvo, etc.)","Otras"
+];
 
-// ── AUTH ──────────────────────────────────────────────────────
-onAuthStateChanged(auth, user => {
-  if (user && user.email === EMAIL_AUTORIZADO) {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('appScreen').style.display = 'block';
-    document.getElementById('userName').textContent = user.displayName || user.email;
-    document.getElementById('userAvatar').textContent = (user.displayName || 'D')[0].toUpperCase();
-    cargarInscripciones();
-  } else if (user) {
-    signOut(auth);
-    document.getElementById('loginError').style.display = 'block';
-  }
+function buildSiNoGrid(containerId, conds, prefix) {
+  document.getElementById(containerId).innerHTML = conds.map((c,i) => `
+    <div class="ti"><span>${c}</span><div class="sm">
+      <label><input type="radio" name="${prefix}_${i}" value="SI"> SI</label>
+      <label><input type="radio" name="${prefix}_${i}" value="NO" checked> NO</label>
+    </div></div>`).join('');
+}
+buildSiNoGrid('grSalud',    COND_SALUD,    'sal');
+buildSiNoGrid('grEjercicio',COND_EJERCICIO,'eje');
+buildSiNoGrid('grFamiliar', COND_FAMILIAR, 'fam');
+
+// Alergias: cada una tiene SI/NO Y ¿requirió internación? SI/NO
+document.getElementById('grAlergias').innerHTML = `
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+  ${TIPOS_ALERGIA.map((a,i) => `
+    <div class="ti" style="flex-direction:column;align-items:flex-start;gap:5px">
+      <span style="font-weight:600">${a}</span>
+      <div style="display:flex;gap:12px;font-size:.76rem">
+        <span>¿Padece? <label style="margin-left:4px"><input type="radio" name="alg_${i}" value="SI"> SI</label>
+          <label style="margin-left:4px"><input type="radio" name="alg_${i}" value="NO" checked> NO</label></span>
+        <span>¿Internación? <label style="margin-left:4px"><input type="radio" name="algInt_${i}" value="SI"> SI</label>
+          <label style="margin-left:4px"><input type="radio" name="algInt_${i}" value="NO" checked> NO</label></span>
+      </div>
+    </div>`).join('')}
+  </div>`;
+
+// ── SI/NO BUTTONS ─────────────────────────────────────
+const show = (id, cond) => {
+  const el = document.getElementById(id);
+  if (el) el.style.display = cond ? (el.classList.contains('domr') ? 'block' : 'block') : 'none';
+};
+
+document.querySelectorAll('.sb2').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const f = btn.dataset.f, vv = btn.dataset.v;
+    document.getElementById(f).value = vv;
+    document.querySelectorAll(`[data-f="${f}"]`).forEach(b => b.classList.remove('ss','ns'));
+    btn.classList.add(vv==='SI'?'ss':'ns');
+    // Condicionales
+    if (f==='hijosmenores')      show('grpSalaMaternal',    vv==='SI');
+    if (f==='tieneDni' && vv==='No') { show('grpCpi',true); show('grpDocExt',true); }
+    if (f==='tieneDocExt')       { show('grpDocExtDetalle',vv==='SI'); show('grpNroDocExt',vv==='SI'); }
+    if (f==='tieneHermanos')     show('grpHermanos',        vv==='SI');
+    if (f==='lenguasDistintas')  { show('grpLenguaIndigena',vv==='SI'); show('grpOtraLengua',vv==='SI'); }
+    if (f==='obraSocial')        show('grpObraSocial',      vv==='SI');
+    if (f==='tieneAlergia')      show('grpAlergias',        vv==='SI');
+    if (f==='medicacion')        show('grpMedicacion',      vv==='SI');
+    if (f==='operacion')         show('grpOperacion',       vv==='SI');
+    if (f==='dismAuditiva')      show('grpAudifonos',       vv==='SI');
+    if (f==='dismVisual')        show('grpLentes',          vv==='SI');
+    if (f==='proyectoInclusion') show('grpTipoInclusion',   vv==='SI');
+    if (f==='r1convive')         show('grpR1Dom',           vv==='NO');
+    if (f==='r1tieneDocExt')     { show('grpR1DocExt',vv==='SI'); show('grpR1NroDocExt',vv==='SI'); }
+    if (f==='r2convive')         show('grpR2Dom',           vv==='NO');
+    if (f==='r2tieneDocExt')     { show('grpR2DocExt',vv==='SI'); show('grpR2NroDocExt',vv==='SI'); }
+  });
 });
 
-document.getElementById('btnGoogle').addEventListener('click', () => signInWithPopup(auth, provider).catch(() => {}));
-document.getElementById('btnLogout').addEventListener('click', () => signOut(auth).then(() => {
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('appScreen').style.display = 'none';
-}));
-
-// ── CARGAR DATOS ──────────────────────────────────────────────
-async function cargarInscripciones() {
-  try {
-    const q = query(collection(db, 'inscripciones'), orderBy('timestamp', 'desc'));
-    const snap = await getDocs(q);
-    inscripciones = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    actualizarStats();
-    renderTabla();
-  } catch(e) {
-    showToast('Error al cargar datos', 'error');
-    console.error(e);
-  }
-}
-
-document.getElementById('btnRefresh').addEventListener('click', cargarInscripciones);
-
-// ── STATS ─────────────────────────────────────────────────────
-function actualizarStats() {
-  const hoy = new Date().toDateString();
-  document.getElementById('statTotal').textContent = inscripciones.length;
-  document.getElementById('statHoy').textContent = inscripciones.filter(i => {
-    if (!i.timestamp) return false;
-    return new Date(i.timestamp.seconds*1000).toDateString() === hoy;
-  }).length;
-  document.getElementById('statPendientes').textContent  = inscripciones.filter(i => i.estado === 'pendiente').length;
-  document.getElementById('statProcesadas').textContent  = inscripciones.filter(i => i.estado === 'procesada').length;
-  document.getElementById('btnDescargarTodos').style.display = inscripciones.length > 0 ? 'flex' : 'none';
-}
-
-// ── TABLA ─────────────────────────────────────────────────────
-function renderTabla() {
-  const texto  = document.getElementById('filtroTexto').value.toLowerCase();
-  const estado = document.getElementById('filtroEstado').value;
-  const turno  = document.getElementById('filtroTurno').value;
-
-  const filtrados = inscripciones.filter(i => {
-    const match = !texto || `${i.apellido} ${i.nombre} ${i.numeroDni}`.toLowerCase().includes(texto);
-    const matchE = !estado || i.estado === estado;
-    const matchT = !turno  || i.turno === turno;
-    return match && matchE && matchT;
-  });
-
-  const tbody = document.getElementById('tablaBody');
-  const empty = document.getElementById('emptyState');
-
-  if (filtrados.length === 0) {
-    tbody.innerHTML = ''; empty.style.display = 'block'; return;
-  }
-  empty.style.display = 'none';
-
-  tbody.innerHTML = filtrados.map(i => {
-    const fecha = i.timestamp ? new Date(i.timestamp.seconds*1000).toLocaleDateString('es-AR') : '—';
-    const badge = i.estado === 'procesada'
-      ? '<span class="badge badge-procesada">Procesada</span>'
-      : '<span class="badge badge-pendiente">Pendiente</span>';
-    return `<tr>
-      <td><strong>${i.apellido || '—'}</strong>, ${i.nombre || '—'}</td>
-      <td>${i.numeroDni || '—'}</td>
-      <td>${i.anio || '—'}° · ${i.turno || '—'}</td>
-      <td>${i.r1nombre || '—'} ${i.r1apellido || ''}</td>
-      <td>${i.r1celular || '—'}</td>
-      <td>${fecha}</td>
-      <td>${badge}</td>
-      <td><div class="td-actions">
-        <button class="btn-ver btn-sm" onclick="verDetalle('${i.id}')">👁 Ver</button>
-        <button class="btn-pdf btn-sm" id="pdfbtn_${i.id}" onclick="generarPDF('${i.id}')">⬇ PDF</button>
-      </div></td>
-    </tr>`;
-  }).join('');
-}
-
-['filtroTexto','filtroEstado','filtroTurno'].forEach(id =>
-  document.getElementById(id).addEventListener('input', renderTabla)
+// Mostrar campos de internación si alguna es SI
+['internComun','internIntensivos'].forEach(n =>
+  document.querySelectorAll(`input[name="${n}"]`).forEach(r =>
+    r.addEventListener('change', () => {
+      const alguna = ['internComun','internIntensivos'].some(x =>
+        document.querySelector(`input[name="${x}"]:checked`)?.value === 'SI');
+      show('grpInternacion', alguna);
+    })
+  )
 );
 
-// ── MODAL DETALLE ─────────────────────────────────────────────
-window.verDetalle = (id) => {
-  const ins = inscripciones.find(i => i.id === id);
-  if (!ins) return;
-  docSeleccionado = ins;
-  document.getElementById('modalTitulo').textContent = `${ins.apellido}, ${ins.nombre}`;
-
-  const salud = ins.salud || {};
-  const condSI = Object.entries(salud).filter(([,v]) => v === 'SI').map(([k]) => k).join(', ') || 'Ninguna';
-
-  document.getElementById('modalBody').innerHTML = `
-    <div class="detail-section">
-      <h4>Datos del/la Estudiante</h4>
-      <div class="detail-grid">
-        <div class="detail-item"><div class="key">Apellido y Nombre</div><div class="val">${ins.apellido}, ${ins.nombre}</div></div>
-        <div class="detail-item"><div class="key">Fecha de Nacimiento</div><div class="val">${ins.fechaNac || '—'}</div></div>
-        <div class="detail-item"><div class="key">Género</div><div class="val">${ins.genero || '—'}</div></div>
-        <div class="detail-item"><div class="key">Nacionalidad</div><div class="val">${ins.nacionalidad || '—'}</div></div>
-        <div class="detail-item"><div class="key">DNI</div><div class="val">${ins.numeroDni || '—'}</div></div>
-        <div class="detail-item"><div class="key">CUIL</div><div class="val">${ins.cuil || '—'}</div></div>
-      </div>
-    </div>
-    <div class="detail-section">
-      <h4>Domicilio</h4>
-      <div class="detail-grid">
-        <div class="detail-item"><div class="key">Dirección</div><div class="val">${ins.calle || ''} ${ins.numero || ''}</div></div>
-        <div class="detail-item"><div class="key">Localidad</div><div class="val">${ins.localidad || '—'}, ${ins.distrito || '—'}</div></div>
-        <div class="detail-item"><div class="key">Celular</div><div class="val">${ins.celular || '—'}</div></div>
-        <div class="detail-item"><div class="key">Teléfono fijo</div><div class="val">${ins.telefonoFijo || '—'}</div></div>
-      </div>
-    </div>
-    <div class="detail-section">
-      <h4>Inscripción</h4>
-      <div class="detail-grid">
-        <div class="detail-item"><div class="key">Ciclo</div><div class="val">${ins.ciclo || '—'}</div></div>
-        <div class="detail-item"><div class="key">Año</div><div class="val">${ins.anio || '—'}°</div></div>
-        <div class="detail-item"><div class="key">Turno</div><div class="val">${ins.turno || '—'}</div></div>
-        <div class="detail-item"><div class="key">Condición</div><div class="val">${ins.condicion || '—'}</div></div>
-      </div>
-    </div>
-    <div class="detail-section">
-      <h4>Responsable 1</h4>
-      <div class="detail-grid">
-        <div class="detail-item"><div class="key">Nombre</div><div class="val">${ins.r1nombre || ''} ${ins.r1apellido || ''}</div></div>
-        <div class="detail-item"><div class="key">Vínculo</div><div class="val">${ins.r1vinculo || '—'}</div></div>
-        <div class="detail-item"><div class="key">Celular</div><div class="val">${ins.r1celular || '—'}</div></div>
-        <div class="detail-item"><div class="key">Email</div><div class="val">${ins.r1email || '—'}</div></div>
-      </div>
-    </div>
-    <div class="detail-section">
-      <h4>Salud — Condiciones marcadas como SI</h4>
-      <div class="detail-item" style="grid-column:1/-1"><div class="val" style="font-size:0.85rem">${condSI}</div></div>
-    </div>`;
-
-  document.getElementById('modalBtnProcesada').style.display =
-    ins.estado === 'procesada' ? 'none' : 'block';
-  document.getElementById('modalOverlay').classList.add('open');
+// ── PROGRESO ──────────────────────────────────────────
+const REQS = ['apellido','nombre','fechaNac','genero','tieneDni','calle','localidad','ciclo','anio','turno','condicion','r1vinculo','r1apellido','r1nombre','r1celular'];
+const updProg = () => {
+  const n = REQS.filter(id => document.getElementById(id)?.value?.trim()).length;
+  document.getElementById('pgr').style.width = (n/REQS.length*100)+'%';
 };
+document.querySelectorAll('input,select,textarea').forEach(el => el.addEventListener('input', updProg));
 
-document.getElementById('modalClose').addEventListener('click', () =>
-  document.getElementById('modalOverlay').classList.remove('open')
-);
-document.getElementById('modalOverlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('modalOverlay'))
-    document.getElementById('modalOverlay').classList.remove('open');
-});
+// ── HELPERS ───────────────────────────────────────────
+const v   = id => (document.getElementById(id)?.value||'').trim();
+const chk = name => [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(c=>c.value).join(', ');
+const rad = name => document.querySelector(`input[name="${name}"]:checked`)?.value||'NO';
+const grid = (prefix, conds) => Object.fromEntries(conds.map((c,i) => [c, rad(`${prefix}_${i}`)]));
+const algGrid = () => Object.fromEntries(TIPOS_ALERGIA.map((a,i) => [a, { padece: rad(`alg_${i}`), internacion: rad(`algInt_${i}`) }]));
 
-document.getElementById('modalBtnProcesada').addEventListener('click', async () => {
-  if (!docSeleccionado) return;
-  await updateDoc(doc(db, 'inscripciones', docSeleccionado.id), { estado: 'procesada' });
-  docSeleccionado.estado = 'procesada';
-  const ins = inscripciones.find(i => i.id === docSeleccionado.id);
-  if (ins) ins.estado = 'procesada';
-  actualizarStats(); renderTabla();
-  document.getElementById('modalOverlay').classList.remove('open');
-  showToast('Inscripción marcada como procesada ✓', 'ok');
-});
+function showToast(msg) {
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
 
-document.getElementById('modalBtnPDF').addEventListener('click', () => {
-  if (docSeleccionado) generarPDF(docSeleccionado.id);
-});
-
-// ── GENERACIÓN PDF ────────────────────────────────────────────
-// Carga pdf-lib dinámicamente
-async function loadPdfLib() {
-  if (window.PDFLib) return window.PDFLib;
-  return new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
-    s.onload = () => resolve(window.PDFLib);
-    s.onerror = reject;
-    document.head.appendChild(s);
+// ── SUBMIT ────────────────────────────────────────────
+document.getElementById('f').addEventListener('submit', async e => {
+  e.preventDefault();
+  let ok = true;
+  REQS.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el?.value?.trim()) { el?.classList.add('err'); ok=false; }
+    else el?.classList.remove('err');
   });
-}
+  if (!ok) { showToast('⚠ Completá los campos obligatorios marcados en rojo'); return; }
 
-// Carga el PDF plantilla desde el mismo directorio
-async function loadTemplatePDF() {
-  const res = await fetch('PLANILLA_INSCRIPCION_-SECUNDARIA.pdf');
-  if (!res.ok) throw new Error('No se pudo cargar la plantilla PDF');
-  return await res.arrayBuffer();
-}
-
-function chk(val) {
-  if (!val) return false;
-  return ['SI','S','SÍ','1','TRUE','YES'].includes(String(val).trim().toUpperCase());
-}
-
-function buildFieldValues(ins) {
-  // Devuelve array de {name, value, type:'text'|'check'|'radio'}
-  const fv = [];
-  const t  = (v) => (v || '').toString().trim();
-  const cb = (name, cond) => fv.push({ name, type:'check', value: cond });
-  const tx = (name, val) => fv.push({ name, type:'text', value: t(val) });
-
-  // Estudiante
-  tx('Text1', ins.apellido); tx('Text2', ins.nombre);
-  tx('Fecha4_af_date', ins.fechaNac);
-  tx('Text5', ins.numeroDni); tx('Text6', ins.cuil);
-  tx('Text11', ins.nacionalidad);
-
-  // Género
-  const g = t(ins.genero);
-  cb('Mujer',                          g === 'Mujer');
-  cb('Mujer trans  travesti',          g.includes('trans') && g.includes('ujer'));
-  cb('Varón',                          g === 'Varón');
-  cb('Varón trans  masculinidad trans', g.includes('trans') && g.includes('arón'));
-  cb('No binario',                     g === 'No binario');
-  cb('Otra',                           g === 'Otra');
-  cb('No desea responder',             g === 'No desea responder');
-
-  // Lugar de nacimiento
-  cb('En Argentina',    t(ins.lugarNac) === 'Argentina');
-  cb('En el extranjero',t(ins.lugarNac) === 'Extranjero');
-  cb('Buenos Aires',    true);
-
-  // DNI
-  const dni = t(ins.tieneDni);
-  cb('SI y tiene el DNI físico',                              dni === 'Sí, tiene DNI físico');
-  cb('SI pero NO tiene el DNI físico y se encuentra en trámite', dni === 'Sí, en trámite');
-  cb('SI pero NO tiene el DNI físico  y NO se encuentra en trámite', dni === 'Sí, sin trámite');
-  cb('NO posee DNI argentino',                                dni === 'No');
-
-  // Domicilio
-  tx('Text12', ins.calle); tx('Text13', ins.numero); tx('Text15', ins.piso);
-  tx('Text17', ins.depto); tx('Text18', ins.localidad); tx('Text90', ins.distrito);
-  tx('Text19', ins.entreCalle); tx('Text20', ins.yCalle);
-  tx('Text22', ins.telefonoFijo); tx('Text92', ins.celular);
-
-  // Otros datos
-  cb('SI_4', chk(ins.tieneHermanos)); cb('NO tiene hermanas o hermanos', ins.tieneHermanos != null && !chk(ins.tieneHermanos));
-  tx('Text86', ins.cantHermanos); tx('Text87', ins.cantHermanosEscuela);
-  cb('SI_7', chk(ins.auh)); cb('NO_7', ins.auh != null && !chk(ins.auh));
-  cb('SI_8', chk(ins.progresar)); cb('NO_8', ins.progresar != null && !chk(ins.progresar));
-  cb('SI_3', chk(ins.pueblosOriginarios)); cb('NO_4', ins.pueblosOriginarios != null && !chk(ins.pueblosOriginarios));
-  cb('SI_2', chk(ins.lenguasDistintas)); cb('NO_3', ins.lenguasDistintas != null && !chk(ins.lenguasDistintas));
-
-  // Transporte
-  const tr = t(ins.transporte).toLowerCase();
-  cb('A pieBicicleta',           tr.includes('pie') || tr.includes('bici'));
-  cb('Transporte escolar DGCyE', tr.includes('escolar'));
-  cb('Colectivo',                tr.includes('colectivo'));
-  cb('Tren',                     tr.includes('tren'));
-  cb('Vehículo particular',      tr.includes('particular'));
-  cb('TaxiRemis',               tr.includes('taxi') || tr.includes('remis'));
-  cb('Otro',                     tr.includes('otro'));
-
-  // Obra social
-  cb('SI_11.0', chk(ins.obraSocial)); cb('NO_11', ins.obraSocial != null && !chk(ins.obraSocial));
-  tx('Text94', ins.nombreObraSocial); tx('Text95', ins.nroAfiliado);
-
-  // Salud
-  const s = ins.salud || {};
-  const saludMap = [
-    ['Diabetes',                                'Check Box1.0.0','Check Box4.0.0'],
-    ['Presión arterial elevada',                'Check Box1.1.0','Check Box4.1.0'],
-    ['Convulsiones',                            'Check Box1.2.0','Check Box4.2.0'],
-    ['Alteraciones sanguíneas',                 'Check Box1.3.0','Check Box4.2.1'],
-    ['Quemaduras moderadas o severas',          'Check Box5.0',  'Check Box5.1'],
-    ['Problemas de piel',                       'Check Box6.0.0','Check Box6.0.1'],
-    ['Fracturas / luxaciones',                  'Check Box1.4.0','Check Box1.4.1'],
-    ['Problemas en huesos o articulaciones',    'Check Box1.5.0','Check Box1.5.1'],
-    ['Falta o no funcionamiento de algún órgano','Check Box6.1.1','Check Box6.1.0'],
-    ['Enfermedad oncohematológica',             'Check Box1.6.0','Check Box1.6.1'],
-    ['Inmunodeficiencias',                      'Check Box7.0',  'Check Box7.1'],
-    ['Traumatismo de cráneo',                   'Check Box1.7.0','Check Box1.7.1'],
-    ['Asma / Broncoespasmos',                   'Check Box8.0.0','Check Box8.0.1'],
-    ['Celiaquía',                               'Check Box9.0.0','Check Box9.0.1'],
-    ['Problemas cardíacos',                     'Check Box8.1.0','Check Box8.1.1'],
-  ];
-  saludMap.forEach(([col, cbSI, cbNO]) => {
-    const val = s[col]; // puede ser 'SI', 'NO', o undefined (no respondido)
-    cb(cbSI, val === 'SI');
-    cb(cbNO, val === 'NO'); // solo marca NO si explícitamente fue respondido como NO
-  });
-
-  // Medicación / operación
-  cb('SI_15', chk(ins.medicacion));   // NO de medicación no existe como campo en el PDF
-  tx('undefined_45', ins.cualMedicacion);
-  cb('SI_16', chk(ins.operacion));
-  cb('NO_16', ins.operacion != null && !chk(ins.operacion));
-  tx('undefined_46', ins.motivoOperacion);
-  cb('SI_17', chk(ins.dismAuditiva)); // NO de auditiva no existe como campo separado
-  cb('SI_19', chk(ins.dismVisual));   // NO de visual no existe como campo separado
-
-  // Inscripción
-  const ciclo = t(ins.ciclo);
-  cb('Ciclo Básico',                  ciclo === 'Ciclo Básico');
-  cb('Ciclo Superior',                ciclo === 'Ciclo Superior');
-  cb('Aula de Fortalecimiento',       ciclo === 'Aula de Fortalecimiento');
-  cb('Escuela Profesional Secundaria',ciclo === 'Escuela Profesional Secundaria');
-
-  const anioMap = {'1':'/1','2':'/2','3':'/3','4':'/4','5':'/5','6':'/6','7':'/7'};
-  fv.push({ name:'Año', type:'radio', value: anioMap[t(ins.anio)] || '/1' });
-
-  const turno = t(ins.turno);
-  cb('Mañana', turno==='Mañana'); cb('Tarde', turno==='Tarde');
-  cb('Vespertino', turno==='Vespertino'); cb('Noche', turno==='Noche');
-
-  const cond = t(ins.condicion);
-  cb('Ingresante al Nivel',      cond === 'Ingresante al Nivel');
-  cb('Promovida  Promovido',     ['Promovido','Promovida'].includes(cond));
-  cb('Reinscripta  Reinscripto', ['Reinscripto','Reinscripta'].includes(cond));
-  cb('Repitente',                cond === 'Repitente');
-
-  // Responsable 1
-  const v1 = t(ins.r1vinculo);
-  cb('Madre', v1==='Madre'); cb('Padre', v1==='Padre');
-  cb('Tutor', v1==='Tutor'); cb('Tutora', v1==='Tutora'); cb('Otro_2', v1==='Otro');
-  tx('Text3', ins.r1apellido); tx('Text7', ins.r1nombre);
-  tx('Text4', ins.r1nacionalidad); tx('Text16', ins.r1dni);
-  tx('Text25', ins.r1ocupacion);
-  tx('Text47', ins.r1telefonoFijo || ''); tx('Text48', ins.r1celular);
-  tx('Text49', ins.r1email);
-  cb('SI_36', chk(ins.r1convive || 'SI')); cb('NO_36', !chk(ins.r1convive || 'SI'));
-
-  // Responsable 2
-  const v2 = t(ins.r2vinculo);
-  cb('Madre_2', v2==='Madre'); cb('Padre_2', v2==='Padre');
-  cb('Tutor_2', v2==='Tutor'); cb('Tutora_2', v2==='Tutora'); cb('Otro_3', v2==='Otro');
-  tx('Text59', ins.r2apellido); tx('Text57', ins.r2nombre);
-  tx('Text58', ins.r2dni);
-  tx('Text72', ins.r2celular); tx('Text76', ins.r2email);
-
-  return fv;
-}
-
-window.generarPDF = async (id) => {
-  const ins = inscripciones.find(i => i.id === id);
-  if (!ins) return;
-
-  const btn = document.getElementById('pdfbtn_' + id);
-  const modalBtn = document.getElementById('modalBtnPDF');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>'; }
-  if (modalBtn) { modalBtn.disabled = true; modalBtn.textContent = 'Generando...'; }
+  const btn = document.getElementById('btnEnv');
+  btn.disabled = true;
+  document.getElementById('btnTxt').textContent = '⏳ Enviando...';
 
   try {
-    const [PDFLib, templateBytes] = await Promise.all([loadPdfLib(), loadTemplatePDF()]);
-    const { PDFDocument } = PDFLib;
+    const datos = {
+      // ── ESTUDIANTE ──
+      apellido: v('apellido').toUpperCase(), nombre: v('nombre'),
+      fechaNac: v('fechaNac'), genero: v('genero'),
+      lugarNac: v('lugarNac'), nacionalidad: v('nacionalidad'),
+      provinciaNac: v('provinciaNac'),
+      tieneDni: v('tieneDni'), numeroDni: v('numeroDni'), cuil: v('cuil'),
+      tieneCpi: v('tieneCpi'),
+      tieneDocExt: v('tieneDocExt'), tipoDocExt: v('tipoDocExt'), nroDocExt: v('nroDocExt'),
+      hijosmenores: v('hijosmenores'), salaMaternal: v('salaMaternal'),
+      // ── DOMICILIO ──
+      calle: v('calle'), numero: v('numero'), piso: v('piso'), torre: v('torre'), depto: v('depto'),
+      entreCalle: v('entreCalle'), yCalle: v('yCalle'), otroDato: v('otroDato'),
+      provincia: v('provincia'), distrito: v('distrito'), localidad: v('localidad'),
+      telFijoCod: v('telFijoCod'), telFijo: v('telFijo'),
+      celularCod: v('celularCod'), celular: v('celular'),
+      // ── OTROS DATOS ──
+      tieneHermanos: v('tieneHermanos'), cantHermanos: v('cantHermanos'), cantHermanosEsc: v('cantHermanosEsc'),
+      lenguasDistintas: v('lenguasDistintas'), lenguaIndigena: v('lenguaIndigena'), otraLengua: v('otraLengua'),
+      pueblosOriginarios: v('pueblosOriginarios'),
+      auh: v('auh'), progresar: v('progresar'),
+      transporte: chk('transporte'),
+      // ── SALUD ──
+      obraSocial: v('obraSocial'), nombreObraSocial: v('nombreObraSocial'), nroAfiliado: v('nroAfiliado'),
+      salud: grid('sal', COND_SALUD),
+      ejercicio: grid('eje', COND_EJERCICIO),
+      internComun: rad('internComun'), internIntensivos: rad('internIntensivos'),
+      cantInternaciones: v('cantInternaciones'), causaInternacion: v('causaInternacion'),
+      tieneAlergia: v('tieneAlergia'),
+      alergias: algGrid(),
+      medicacion: v('medicacion'), cualMedicacion: v('cualMedicacion'),
+      operacion: v('operacion'), motivoOperacion: v('motivoOperacion'), anioOperacion: v('anioOperacion'),
+      dismAuditiva: v('dismAuditiva'), usaAudifonos: v('usaAudifonos'),
+      dismVisual: v('dismVisual'), usaLentes: v('usaLentes'),
+      antecFamiliar: grid('fam', COND_FAMILIAR),
+      // ── INSCRIPCIÓN ──
+      ciclo: v('ciclo'), orientacion: v('orientacion'), anio: v('anio'),
+      turno: v('turno'), jornada: v('jornada'), condicion: v('condicion'),
+      procPais: v('procPais'), procProvincia: v('procProvincia'), procDistrito: v('procDistrito'),
+      procNivel: v('procNivel'), procSector: v('procSector'), procDependencia: v('procDependencia'),
+      procEscuela: v('procEscuela'),
+      proyectoInclusion: v('proyectoInclusion'), tipoInclusion: v('tipoInclusion'),
+      acompAsistente: v('acompAsistente'),
+      asisteCec: v('asisteCec'), asisteCef: v('asisteCef'), asisteEstetica: v('asisteEstetica'),
+      servAlim: chk('servAlim'),
+      // ── RESPONSABLE 1 ──
+      r1vinculo: v('r1vinculo'), r1apellido: v('r1apellido').toUpperCase(),
+      r1nombre: v('r1nombre'), r1nac: v('r1nac'),
+      r1tieneDni: v('r1tieneDni'), r1dni: v('r1dni'), r1tieneCpi: v('r1tieneCpi'),
+      r1tieneDocExt: v('r1tieneDocExt'), r1tipoDocExt: v('r1tipoDocExt'), r1nroDocExt: v('r1nroDocExt'),
+      r1ocupacion: v('r1ocupacion'),
+      r1asistioEduc: v('r1asistioEduc'), r1nivelEduc: v('r1nivelEduc'), r1completoNivel: v('r1completoNivel'),
+      r1actividad: chk('r1act'),
+      r1convive: v('r1convive')||'SI',
+      r1calle: v('r1calle'), r1numero: v('r1numero'), r1piso: v('r1piso'),
+      r1torre: v('r1torre'), r1depto: v('r1depto'),
+      r1entreCalle: v('r1entreCalle'), r1yCalle: v('r1yCalle'), r1otroDato: v('r1otroDato'),
+      r1provincia: v('r1provincia'), r1distrito: v('r1distrito'), r1localidad: v('r1localidad'),
+      r1telFijoCod: v('r1telFijoCod'), r1telFijo: v('r1telFijo'),
+      r1celularCod: v('r1celularCod'), r1celular: v('r1celular'),
+      r1email: v('r1email'),
+      // ── RESPONSABLE 2 ──
+      r2vinculo: v('r2vinculo'), r2apellido: v('r2apellido').toUpperCase(),
+      r2nombre: v('r2nombre'), r2nac: v('r2nac'),
+      r2tieneDni: v('r2tieneDni'), r2dni: v('r2dni'), r2tieneCpi: v('r2tieneCpi'),
+      r2tieneDocExt: v('r2tieneDocExt'), r2tipoDocExt: v('r2tipoDocExt'), r2nroDocExt: v('r2nroDocExt'),
+      r2ocupacion: v('r2ocupacion'),
+      r2asistioEduc: v('r2asistioEduc'), r2nivelEduc: v('r2nivelEduc'), r2completoNivel: v('r2completoNivel'),
+      r2actividad: chk('r2act'),
+      r2convive: v('r2convive')||'SI',
+      r2calle: v('r2calle'), r2numero: v('r2numero'), r2piso: v('r2piso'),
+      r2torre: v('r2torre'), r2depto: v('r2depto'),
+      r2entreCalle: v('r2entreCalle'), r2yCalle: v('r2yCalle'), r2otroDato: v('r2otroDato'),
+      r2provincia: v('r2provincia'), r2distrito: v('r2distrito'), r2localidad: v('r2localidad'),
+      r2telFijoCod: v('r2telFijoCod'), r2telFijo: v('r2telFijo'),
+      r2celularCod: v('r2celularCod'), r2celular: v('r2celular'),
+      r2email: v('r2email'),
+      // ── RESTRICCIONES ──
+      restApellido: v('restApellido'), restNombre: v('restNombre'),
+      restTipoDoc: v('restTipoDoc'), restNroDoc: v('restNroDoc'),
+      restDescripcion: v('restDescripcion'),
+      // ── META ──
+      timestamp: serverTimestamp(), estado: 'pendiente'
+    };
 
-    const pdfDoc = await PDFDocument.load(templateBytes);
-    const form   = pdfDoc.getForm();
-    const fields = form.getFields();
-
-    // Construir mapa de campos disponibles
-    const camposDisponibles = new Set(fields.map(f => f.getName()));
-
-    const fvList = buildFieldValues(ins);
-
-    for (const fv of fvList) {
-      if (!camposDisponibles.has(fv.name)) continue;
-      try {
-        if (fv.type === 'text') {
-          const field = form.getTextField(fv.name);
-          field.setText(fv.value);
-        } else if (fv.type === 'check') {
-          const field = form.getCheckBox(fv.name);
-          fv.value ? field.check() : field.uncheck();
-        } else if (fv.type === 'radio') {
-          const field = form.getRadioGroup(fv.name);
-          try { field.select(fv.value); } catch(e) { /* opción no disponible */ }
-        }
-      } catch(e) { /* campo con tipo incorrecto, ignorar */ }
-    }
-
-    // Aplanar para que no sea editable
-    form.flatten();
-
-    const pdfBytes = await pdfDoc.save();
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url;
-    a.download = `inscripcion_${ins.apellido}_${ins.nombre}.pdf`.replace(/\s+/g,'_');
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('PDF descargado ✓', 'ok');
-  } catch(e) {
-    console.error(e);
-    showToast('Error al generar el PDF: ' + e.message, 'error');
-  } finally {
-    if (btn) { btn.disabled = false; btn.innerHTML = '⬇ PDF'; }
-    if (modalBtn) { modalBtn.disabled = false; modalBtn.textContent = '⬇ Descargar PDF'; }
-  }
-};
-
-// ── DESCARGAR TODOS ───────────────────────────────────────────
-document.getElementById('btnDescargarTodos').addEventListener('click', async () => {
-  const pendientes = inscripciones.filter(i => i.estado === 'pendiente');
-  if (pendientes.length === 0) { showToast('No hay inscripciones pendientes', 'error'); return; }
-  showToast(`Generando ${pendientes.length} PDFs...`);
-  for (const ins of pendientes) {
-    await generarPDF(ins.id);
-    await new Promise(r => setTimeout(r, 800)); // pequeña pausa entre descargas
+    const ref = await addDoc(collection(db,'inscripciones'), datos);
+    document.getElementById('f').style.display='none';
+    document.getElementById('exito').style.display='block';
+    document.getElementById('refNum').textContent = ref.id.substring(0,8).toUpperCase();
+    document.getElementById('pgr').style.width='100%';
+    window.scrollTo({top:0,behavior:'smooth'});
+  } catch(err) {
+    console.error(err);
+    showToast('❌ Error al enviar. Verificá tu conexión e intentá de nuevo.');
+    btn.disabled=false;
+    document.getElementById('btnTxt').textContent='📨 Enviar Solicitud de Inscripción';
   }
 });
-
-// ── TOAST ─────────────────────────────────────────────────────
-function showToast(msg, type='') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show' + (type ? ' '+type : '');
-  setTimeout(() => t.className = 'toast', 3000);
-}
 </script>
 </body>
 </html>
