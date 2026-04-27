@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de Inscripciones — Directivo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --azul: #1a3a6b; --azul-claro: #2557b0; --celeste: #e8f0ff;
+    --acento: #c8960c; --gris: #f4f5f8; --borde: #d0d7e6;
+    --texto: #1c2333; --error: #c0392b; --ok: #1a7a4a;
+    --sidebar: 260px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--gris); color: var(--texto); min-height: 100vh; }
+
+  /* LOGIN */
+  #loginScreen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--azul) 0%, #0d2244 100%);
+  }
+  .login-card {
+    background: white; border-radius: 16px; padding: 48px 40px; width: 380px;
+    text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .login-card .logo { font-size: 48px; margin-bottom: 16px; }
+  .login-card h1 { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--azul); margin-bottom: 6px; }
+  .login-card p { font-size: 0.85rem; color: #888; margin-bottom: 32px; line-height: 1.5; }
+  .btn-google {
+    width: 100%; padding: 14px; border: 2px solid var(--borde); border-radius: 10px;
+    background: white; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+    font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 12px;
+    transition: all 0.2s; color: var(--texto);
+  }
+  .btn-google:hover { border-color: var(--azul-claro); background: var(--celeste); }
+  .btn-google img { width: 20px; }
+  .login-error { color: var(--error); font-size: 0.82rem; margin-top: 12px; display: none; }
+
+  /* APP */
+  #appScreen { display: none; }
+
+  /* SIDEBAR */
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar);
+    background: var(--azul); color: white; display: flex; flex-direction: column; z-index: 50;
+  }
+  .sidebar-logo { padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .sidebar-logo .escudo { font-size: 28px; margin-bottom: 8px; }
+  .sidebar-logo h2 { font-family: 'DM Serif Display', serif; font-size: 1rem; font-weight: 400; line-height: 1.3; }
+  .sidebar-logo p { font-size: 0.72rem; opacity: 0.6; margin-top: 2px; }
+  .sidebar-nav { flex: 1; padding: 16px 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 12px 20px;
+    cursor: pointer; transition: background 0.15s; font-size: 0.9rem; opacity: 0.8;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.1); opacity: 1; }
+  .nav-item.active { background: rgba(255,255,255,0.15); opacity: 1; border-right: 3px solid var(--acento); }
+  .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .user-info { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--acento); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+  .user-name { font-size: 0.8rem; opacity: 0.85; }
+  .btn-logout { width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.8rem; transition: background 0.15s; }
+  .btn-logout:hover { background: rgba(255,255,255,0.2); }
+
+  /* MAIN */
+  .main { margin-left: var(--sidebar); min-height: 100vh; }
+  .topbar { background: white; border-bottom: 1px solid var(--borde); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar h1 { font-family: 'DM Serif Display', serif; font-size: 1.3rem; font-weight: 400; }
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+  .content { padding: 28px 32px; }
+
+  /* STATS */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: white; border-radius: 10px; padding: 20px; border: 1px solid var(--borde); }
+  .stat-card .num { font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--azul); }
+  .stat-card .label { font-size: 0.78rem; color: #888; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-card .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+  .dot-pendiente { background: var(--acento); }
+  .dot-procesada { background: var(--ok); }
+
+  /* FILTROS */
+  .filtros { background: white; border-radius: 10px; border: 1px solid var(--borde); padding: 16px 20px; margin-bottom: 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .filtros input, .filtros select {
+    border: 1.5px solid var(--borde); border-radius: 6px; padding: 8px 12px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.88rem; background: white; color: var(--texto);
+  }
+  .filtros input { flex: 1; min-width: 200px; }
+  .filtros input:focus, .filtros select:focus { outline: none; border-color: var(--azul-claro); }
+  .btn-primary { padding: 9px 18px; background: var(--azul); color: white; border: none; border-radius: 6px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500; transition: background 0.15s; }
+  .btn-primary:hover { background: var(--azul-claro); }
+  .btn-acento { padding: 9px 18px; background: var(--acento); color: white; border: none; border-radius: 6px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500; transition: opacity 0.15s; }
+  .btn-acento:hover { opacity: 0.88; }
+  .btn-sm { padding: 6px 12px; font-size: 0.82rem; }
+
+  /* TABLA */
+  .tabla-wrap { background: white; border-radius: 10px; border: 1px solid var(--borde); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: var(--azul); color: white; }
+  th { padding: 12px 16px; text-align: left; font-size: 0.76rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+  td { padding: 12px 16px; font-size: 0.88rem; border-bottom: 1px solid var(--borde); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--celeste); }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+  .badge-pendiente { background: #fff3cd; color: #856404; }
+  .badge-procesada { background: #d1e7dd; color: #0a3622; }
+  .td-actions { display: flex; gap: 6px; }
+  .btn-pdf { padding: 6px 14px; background: var(--azul); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: background 0.15s; white-space: nowrap; }
+  .btn-pdf:hover { background: var(--azul-claro); }
+  .btn-pdf:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-ver { padding: 6px 14px; background: white; color: var(--azul); border: 1.5px solid var(--borde); border-radius: 5px; cursor: pointer; font-size: 0.8rem; transition: all 0.15s; }
+  .btn-ver:hover { border-color: var(--azul); }
+
+  .empty-state { text-align: center; padding: 60px 24px; color: #aaa; }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 0.9rem; }
+
+  /* MODAL DETALLE */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; padding: 24px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; border-radius: 12px; width: 100%; max-width: 640px; max-height: 85vh; overflow-y: auto; }
+  .modal-header { background: var(--azul); color: white; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-radius: 12px 12px 0 0; position: sticky; top: 0; }
+  .modal-header h2 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 1.1rem; }
+  .modal-close { background: none; border: none; color: white; font-size: 1.4rem; cursor: pointer; opacity: 0.7; }
+  .modal-close:hover { opacity: 1; }
+  .modal-body { padding: 24px; }
+  .detail-section { margin-bottom: 20px; }
+  .detail-section h4 { font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--azul-claro); border-bottom: 2px solid var(--celeste); padding-bottom: 6px; margin-bottom: 12px; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .detail-item { background: var(--gris); border-radius: 6px; padding: 8px 12px; }
+  .detail-item .key { font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 0.04em; }
+  .detail-item .val { font-size: 0.9rem; font-weight: 500; margin-top: 2px; }
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--borde); display: flex; gap: 10px; justify-content: flex-end; position: sticky; bottom: 0; background: white; border-radius: 0 0 12px 12px; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--azul); color: white; padding: 12px 20px; border-radius: 8px; font-size: 0.88rem; transform: translateY(80px); transition: transform 0.3s; z-index: 999; }
+  .toast.show { transform: translateY(0); }
+  .toast.error { background: var(--error); }
+  .toast.ok { background: var(--ok); }
+
+  /* LOADING */
+  .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="logo">🏫</div>
+    <h1>Panel de Inscripciones</h1>
+    <p>Acceso exclusivo para personal directivo.<br>Iniciá sesión con tu cuenta de Google autorizada.</p>
+    <button class="btn-google" id="btnGoogle">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+      Ingresar con Google
+    </button>
+    <p class="login-error" id="loginError">⚠ Tu cuenta no tiene acceso. Contactá al administrador.</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appScreen">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="escudo">🏫</div>
+      <h2>Panel de Inscripciones</h2>
+      <p>Educación Secundaria</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" data-view="inscripciones">📋 Inscripciones</div>
+      <div class="nav-item" data-view="estadisticas">📊 Estadísticas</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="userAvatar">D</div>
+        <div class="user-name" id="userName">Directivo</div>
+      </div>
+      <button class="btn-logout" id="btnLogout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <h1 id="viewTitle">Inscripciones recibidas</h1>
+      <div class="topbar-actions">
+        <button class="btn-acento" id="btnDescargarTodos" style="display:none">⬇ Descargar todos los PDFs</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- STATS -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="num" id="statTotal">—</div>
+          <div class="label">Total recibidas</div>
+        </div>
+        <div class="stat-card">
+          <div class="num" id="statHoy">—</div>
+          <div class="label">Hoy</div>
+        </div>
+        <div class="stat-card">
+          <div class="num" id="statPendientes">—</div>
+          <div class="label"><span class="dot dot-pendiente"></span>Pendientes</div>
+        </div>
+        <div class="stat-card">
+          <div class="num" id="statProcesadas">—</div>
+          <div class="label"><span class="dot dot-procesada"></span>Procesadas</div>
+        </div>
+      </div>
+
+      <!-- FILTROS -->
+      <div class="filtros">
+        <input type="text" id="filtroTexto" placeholder="🔍 Buscar por apellido, nombre o DNI...">
+        <select id="filtroEstado">
+          <option value="">Todos los estados</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="procesada">Procesada</option>
+        </select>
+        <select id="filtroTurno">
+          <option value="">Todos los turnos</option>
+          <option value="Mañana">Mañana</option>
+          <option value="Tarde">Tarde</option>
+          <option value="Vespertino">Vespertino</option>
+          <option value="Noche">Noche</option>
+        </select>
+        <button class="btn-primary" id="btnRefresh">↺ Actualizar</button>
+      </div>
+
+      <!-- TABLA -->
+      <div class="tabla-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Apellido y Nombre</th>
+              <th>DNI</th>
+              <th>Año / Turno</th>
+              <th>Responsable</th>
+              <th>Celular</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tablaBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyState" style="display:none">
+          <div class="icon">📭</div>
+          <p>No hay inscripciones que coincidan con los filtros.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitulo">Detalle de Inscripción</h2>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn-ver" id="modalBtnProcesada">✓ Marcar como procesada</button>
+      <button class="btn-pdf" id="modalBtnPDF">⬇ Descargar PDF</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp }           from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, updateDoc, query, orderBy }
+                                   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged }
+                                   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+// ══════════════════════════════════════════════════════════════
+//  ⚙️  REEMPLAZÁ CON LOS DATOS DE TU NUEVO PROYECTO FIREBASE
+// ══════════════════════════════════════════════════════════════
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDOUfs8bixzLU8_lH726JOqlyNPqOMWAbM",
+  authDomain: "inscripciones-secundaria-25477.firebaseapp.com",
+  projectId: "inscripciones-secundaria-25477",
+  storageBucket: "inscripciones-secundaria-25477.firebasestorage.app",
+  messagingSenderId: "284569368518",
+  appId: "1:284569368518:web:a357c006b165236da4a4c7"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+// Email habilitado para acceder al panel
+const EMAIL_AUTORIZADO = "secundarioperitomoreno@gmail.com";
+// ══════════════════════════════════════════════════════════════
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+let inscripciones = [];
+let docSeleccionado = null;
+
+// ── AUTH ──────────────────────────────────────────────────────
+onAuthStateChanged(auth, user => {
+  if (user && user.email === EMAIL_AUTORIZADO) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appScreen').style.display = 'block';
+    document.getElementById('userName').textContent = user.displayName || user.email;
+    document.getElementById('userAvatar').textContent = (user.displayName || 'D')[0].toUpperCase();
+    cargarInscripciones();
+  } else if (user) {
+    signOut(auth);
+    document.getElementById('loginError').style.display = 'block';
+  }
+});
+
+document.getElementById('btnGoogle').addEventListener('click', () => signInWithPopup(auth, provider).catch(() => {}));
+document.getElementById('btnLogout').addEventListener('click', () => signOut(auth).then(() => {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('appScreen').style.display = 'none';
+}));
+
+// ── CARGAR DATOS ──────────────────────────────────────────────
+async function cargarInscripciones() {
+  try {
+    const q = query(collection(db, 'inscripciones'), orderBy('timestamp', 'desc'));
+    const snap = await getDocs(q);
+    inscripciones = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    actualizarStats();
+    renderTabla();
+  } catch(e) {
+    showToast('Error al cargar datos', 'error');
+    console.error(e);
+  }
+}
+
+document.getElementById('btnRefresh').addEventListener('click', cargarInscripciones);
+
+// ── STATS ─────────────────────────────────────────────────────
+function actualizarStats() {
+  const hoy = new Date().toDateString();
+  document.getElementById('statTotal').textContent = inscripciones.length;
+  document.getElementById('statHoy').textContent = inscripciones.filter(i => {
+    if (!i.timestamp) return false;
+    return new Date(i.timestamp.seconds*1000).toDateString() === hoy;
+  }).length;
+  document.getElementById('statPendientes').textContent  = inscripciones.filter(i => i.estado === 'pendiente').length;
+  document.getElementById('statProcesadas').textContent  = inscripciones.filter(i => i.estado === 'procesada').length;
+  document.getElementById('btnDescargarTodos').style.display = inscripciones.length > 0 ? 'flex' : 'none';
+}
+
+// ── TABLA ─────────────────────────────────────────────────────
+function renderTabla() {
+  const texto  = document.getElementById('filtroTexto').value.toLowerCase();
+  const estado = document.getElementById('filtroEstado').value;
+  const turno  = document.getElementById('filtroTurno').value;
+
+  const filtrados = inscripciones.filter(i => {
+    const match = !texto || `${i.apellido} ${i.nombre} ${i.numeroDni}`.toLowerCase().includes(texto);
+    const matchE = !estado || i.estado === estado;
+    const matchT = !turno  || i.turno === turno;
+    return match && matchE && matchT;
+  });
+
+  const tbody = document.getElementById('tablaBody');
+  const empty = document.getElementById('emptyState');
+
+  if (filtrados.length === 0) {
+    tbody.innerHTML = ''; empty.style.display = 'block'; return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = filtrados.map(i => {
+    const fecha = i.timestamp ? new Date(i.timestamp.seconds*1000).toLocaleDateString('es-AR') : '—';
+    const badge = i.estado === 'procesada'
+      ? '<span class="badge badge-procesada">Procesada</span>'
+      : '<span class="badge badge-pendiente">Pendiente</span>';
+    return `<tr>
+      <td><strong>${i.apellido || '—'}</strong>, ${i.nombre || '—'}</td>
+      <td>${i.numeroDni || '—'}</td>
+      <td>${i.anio || '—'}° · ${i.turno || '—'}</td>
+      <td>${i.r1nombre || '—'} ${i.r1apellido || ''}</td>
+      <td>${i.r1celular || '—'}</td>
+      <td>${fecha}</td>
+      <td>${badge}</td>
+      <td><div class="td-actions">
+        <button class="btn-ver btn-sm" onclick="verDetalle('${i.id}')">👁 Ver</button>
+        <button class="btn-pdf btn-sm" id="pdfbtn_${i.id}" onclick="generarPDF('${i.id}')">⬇ PDF</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+['filtroTexto','filtroEstado','filtroTurno'].forEach(id =>
+  document.getElementById(id).addEventListener('input', renderTabla)
+);
+
+// ── MODAL DETALLE ─────────────────────────────────────────────
+window.verDetalle = (id) => {
+  const ins = inscripciones.find(i => i.id === id);
+  if (!ins) return;
+  docSeleccionado = ins;
+  document.getElementById('modalTitulo').textContent = `${ins.apellido}, ${ins.nombre}`;
+
+  const salud = ins.salud || {};
+  const condSI = Object.entries(salud).filter(([,v]) => v === 'SI').map(([k]) => k).join(', ') || 'Ninguna';
+
+  document.getElementById('modalBody').innerHTML = `
+    <div class="detail-section">
+      <h4>Datos del/la Estudiante</h4>
+      <div class="detail-grid">
+        <div class="detail-item"><div class="key">Apellido y Nombre</div><div class="val">${ins.apellido}, ${ins.nombre}</div></div>
+        <div class="detail-item"><div class="key">Fecha de Nacimiento</div><div class="val">${ins.fechaNac || '—'}</div></div>
+        <div class="detail-item"><div class="key">Género</div><div class="val">${ins.genero || '—'}</div></div>
+        <div class="detail-item"><div class="key">Nacionalidad</div><div class="val">${ins.nacionalidad || '—'}</div></div>
+        <div class="detail-item"><div class="key">DNI</div><div class="val">${ins.numeroDni || '—'}</div></div>
+        <div class="detail-item"><div class="key">CUIL</div><div class="val">${ins.cuil || '—'}</div></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <h4>Domicilio</h4>
+      <div class="detail-grid">
+        <div class="detail-item"><div class="key">Dirección</div><div class="val">${ins.calle || ''} ${ins.numero || ''}</div></div>
+        <div class="detail-item"><div class="key">Localidad</div><div class="val">${ins.localidad || '—'}, ${ins.distrito || '—'}</div></div>
+        <div class="detail-item"><div class="key">Celular</div><div class="val">${ins.celular || '—'}</div></div>
+        <div class="detail-item"><div class="key">Teléfono fijo</div><div class="val">${ins.telefonoFijo || '—'}</div></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <h4>Inscripción</h4>
+      <div class="detail-grid">
+        <div class="detail-item"><div class="key">Ciclo</div><div class="val">${ins.ciclo || '—'}</div></div>
+        <div class="detail-item"><div class="key">Año</div><div class="val">${ins.anio || '—'}°</div></div>
+        <div class="detail-item"><div class="key">Turno</div><div class="val">${ins.turno || '—'}</div></div>
+        <div class="detail-item"><div class="key">Condición</div><div class="val">${ins.condicion || '—'}</div></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <h4>Responsable 1</h4>
+      <div class="detail-grid">
+        <div class="detail-item"><div class="key">Nombre</div><div class="val">${ins.r1nombre || ''} ${ins.r1apellido || ''}</div></div>
+        <div class="detail-item"><div class="key">Vínculo</div><div class="val">${ins.r1vinculo || '—'}</div></div>
+        <div class="detail-item"><div class="key">Celular</div><div class="val">${ins.r1celular || '—'}</div></div>
+        <div class="detail-item"><div class="key">Email</div><div class="val">${ins.r1email || '—'}</div></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <h4>Salud — Condiciones marcadas como SI</h4>
+      <div class="detail-item" style="grid-column:1/-1"><div class="val" style="font-size:0.85rem">${condSI}</div></div>
+    </div>`;
+
+  document.getElementById('modalBtnProcesada').style.display =
+    ins.estado === 'procesada' ? 'none' : 'block';
+  document.getElementById('modalOverlay').classList.add('open');
+};
+
+document.getElementById('modalClose').addEventListener('click', () =>
+  document.getElementById('modalOverlay').classList.remove('open')
+);
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay'))
+    document.getElementById('modalOverlay').classList.remove('open');
+});
+
+document.getElementById('modalBtnProcesada').addEventListener('click', async () => {
+  if (!docSeleccionado) return;
+  await updateDoc(doc(db, 'inscripciones', docSeleccionado.id), { estado: 'procesada' });
+  docSeleccionado.estado = 'procesada';
+  const ins = inscripciones.find(i => i.id === docSeleccionado.id);
+  if (ins) ins.estado = 'procesada';
+  actualizarStats(); renderTabla();
+  document.getElementById('modalOverlay').classList.remove('open');
+  showToast('Inscripción marcada como procesada ✓', 'ok');
+});
+
+document.getElementById('modalBtnPDF').addEventListener('click', () => {
+  if (docSeleccionado) generarPDF(docSeleccionado.id);
+});
+
+// ── GENERACIÓN PDF ────────────────────────────────────────────
+// Carga pdf-lib dinámicamente
+async function loadPdfLib() {
+  if (window.PDFLib) return window.PDFLib;
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+    s.onload = () => resolve(window.PDFLib);
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+// Carga el PDF plantilla desde el mismo directorio
+async function loadTemplatePDF() {
+  const res = await fetch('PLANILLA_INSCRIPCION_-SECUNDARIA.pdf');
+  if (!res.ok) throw new Error('No se pudo cargar la plantilla PDF');
+  return await res.arrayBuffer();
+}
+
+function chk(val) {
+  if (!val) return false;
+  return ['SI','S','SÍ','1','TRUE','YES'].includes(String(val).trim().toUpperCase());
+}
+
+function buildFieldValues(ins) {
+  // Devuelve array de {name, value, type:'text'|'check'|'radio'}
+  const fv = [];
+  const t  = (v) => (v || '').toString().trim();
+  const cb = (name, cond) => fv.push({ name, type:'check', value: cond });
+  const tx = (name, val) => fv.push({ name, type:'text', value: t(val) });
+
+  // Estudiante
+  tx('Text1', ins.apellido); tx('Text2', ins.nombre);
+  tx('Fecha4_af_date', ins.fechaNac);
+  tx('Text5', ins.numeroDni); tx('Text6', ins.cuil);
+  tx('Text11', ins.nacionalidad);
+
+  // Género
+  const g = t(ins.genero);
+  cb('Mujer',                          g === 'Mujer');
+  cb('Mujer trans  travesti',          g.includes('trans') && g.includes('ujer'));
+  cb('Varón',                          g === 'Varón');
+  cb('Varón trans  masculinidad trans', g.includes('trans') && g.includes('arón'));
+  cb('No binario',                     g === 'No binario');
+  cb('Otra',                           g === 'Otra');
+  cb('No desea responder',             g === 'No desea responder');
+
+  // Lugar de nacimiento
+  cb('En Argentina',    t(ins.lugarNac) === 'Argentina');
+  cb('En el extranjero',t(ins.lugarNac) === 'Extranjero');
+  cb('Buenos Aires',    true);
+
+  // DNI
+  const dni = t(ins.tieneDni);
+  cb('SI y tiene el DNI físico',                              dni === 'Sí, tiene DNI físico');
+  cb('SI pero NO tiene el DNI físico y se encuentra en trámite', dni === 'Sí, en trámite');
+  cb('SI pero NO tiene el DNI físico  y NO se encuentra en trámite', dni === 'Sí, sin trámite');
+  cb('NO posee DNI argentino',                                dni === 'No');
+
+  // Domicilio
+  tx('Text12', ins.calle); tx('Text13', ins.numero); tx('Text15', ins.piso);
+  tx('Text17', ins.depto); tx('Text18', ins.localidad); tx('Text90', ins.distrito);
+  tx('Text19', ins.entreCalle); tx('Text20', ins.yCalle);
+  tx('Text22', ins.telefonoFijo); tx('Text92', ins.celular);
+
+  // Otros datos
+  cb('SI_4', chk(ins.tieneHermanos)); cb('NO tiene hermanas o hermanos', !chk(ins.tieneHermanos));
+  tx('Text86', ins.cantHermanos); tx('Text87', ins.cantHermanosEscuela);
+  cb('SI_7', chk(ins.auh)); cb('NO_7', !chk(ins.auh));
+  cb('SI_8', chk(ins.progresar)); cb('NO_8', !chk(ins.progresar));
+  cb('SI_3', chk(ins.pueblosOriginarios)); cb('NO_4', !chk(ins.pueblosOriginarios));
+  cb('SI_2', chk(ins.lenguasDistintas)); cb('NO_3', !chk(ins.lenguasDistintas));
+
+  // Transporte
+  const tr = t(ins.transporte).toLowerCase();
+  cb('A pieBicicleta',           tr.includes('pie') || tr.includes('bici'));
+  cb('Transporte escolar DGCyE', tr.includes('escolar'));
+  cb('Colectivo',                tr.includes('colectivo'));
+  cb('Tren',                     tr.includes('tren'));
+  cb('Vehículo particular',      tr.includes('particular'));
+  cb('TaxiRemis',               tr.includes('taxi') || tr.includes('remis'));
+  cb('Otro',                     tr.includes('otro'));
+
+  // Obra social
+  cb('SI_11.0', chk(ins.obraSocial)); cb('NO_11', !chk(ins.obraSocial));
+  tx('Text94', ins.nombreObraSocial); tx('Text95', ins.nroAfiliado);
+
+  // Salud
+  const s = ins.salud || {};
+  const saludMap = [
+    ['Diabetes',                                'Check Box1.0.0','Check Box4.0.0'],
+    ['Presión arterial elevada',                'Check Box1.1.0','Check Box4.1.0'],
+    ['Convulsiones',                            'Check Box1.2.0','Check Box4.2.0'],
+    ['Alteraciones sanguíneas',                 'Check Box1.3.0','Check Box4.2.1'],
+    ['Quemaduras moderadas o severas',          'Check Box5.0',  'Check Box5.1'],
+    ['Problemas de piel',                       'Check Box6.0.0','Check Box6.0.1'],
+    ['Fracturas / luxaciones',                  'Check Box1.4.0','Check Box1.4.1'],
+    ['Problemas en huesos o articulaciones',    'Check Box1.5.0','Check Box1.5.1'],
+    ['Falta o no funcionamiento de algún órgano','Check Box6.1.1','Check Box6.1.0'],
+    ['Enfermedad oncohematológica',             'Check Box1.6.0','Check Box1.6.1'],
+    ['Inmunodeficiencias',                      'Check Box7.0',  'Check Box7.1'],
+    ['Traumatismo de cráneo',                   'Check Box1.7.0','Check Box1.7.1'],
+    ['Asma / Broncoespasmos',                   'Check Box8.0.0','Check Box8.0.1'],
+    ['Celiaquía',                               'Check Box9.0.0','Check Box9.0.1'],
+    ['Problemas cardíacos',                     'Check Box8.1.0','Check Box8.1.1'],
+  ];
+  saludMap.forEach(([col, cbSI, cbNO]) => {
+    const esSI = s[col] === 'SI';
+    cb(cbSI, esSI); cb(cbNO, !esSI);
+  });
+
+  // Medicación / operación
+  cb('SI_15', chk(ins.medicacion));
+  tx('undefined_45', ins.cualMedicacion);
+  cb('SI_16', chk(ins.operacion)); cb('NO_16', !chk(ins.operacion));
+  tx('undefined_46', ins.motivoOperacion);
+  cb('SI_17', chk(ins.dismAuditiva));
+  cb('SI_19', chk(ins.dismVisual));
+
+  // Inscripción
+  const ciclo = t(ins.ciclo);
+  cb('Ciclo Básico',                  ciclo === 'Ciclo Básico');
+  cb('Ciclo Superior',                ciclo === 'Ciclo Superior');
+  cb('Aula de Fortalecimiento',       ciclo === 'Aula de Fortalecimiento');
+  cb('Escuela Profesional Secundaria',ciclo === 'Escuela Profesional Secundaria');
+
+  const anioMap = {'1':'/1','2':'/2','3':'/3','4':'/4','5':'/5','6':'/6','7':'/7'};
+  fv.push({ name:'Año', type:'radio', value: anioMap[t(ins.anio)] || '/1' });
+
+  const turno = t(ins.turno);
+  cb('Mañana', turno==='Mañana'); cb('Tarde', turno==='Tarde');
+  cb('Vespertino', turno==='Vespertino'); cb('Noche', turno==='Noche');
+
+  const cond = t(ins.condicion);
+  cb('Ingresante al Nivel',      cond === 'Ingresante al Nivel');
+  cb('Promovida  Promovido',     ['Promovido','Promovida'].includes(cond));
+  cb('Reinscripta  Reinscripto', ['Reinscripto','Reinscripta'].includes(cond));
+  cb('Repitente',                cond === 'Repitente');
+
+  // Responsable 1
+  const v1 = t(ins.r1vinculo);
+  cb('Madre', v1==='Madre'); cb('Padre', v1==='Padre');
+  cb('Tutor', v1==='Tutor'); cb('Tutora', v1==='Tutora'); cb('Otro_2', v1==='Otro');
+  tx('Text3', ins.r1apellido); tx('Text7', ins.r1nombre);
+  tx('Text4', ins.r1nacionalidad); tx('Text16', ins.r1dni);
+  tx('Text25', ins.r1ocupacion);
+  tx('Text47', ins.r1telefonoFijo || ''); tx('Text48', ins.r1celular);
+  tx('Text49', ins.r1email);
+  cb('SI_36', chk(ins.r1convive || 'SI')); cb('NO_36', !chk(ins.r1convive || 'SI'));
+
+  // Responsable 2
+  const v2 = t(ins.r2vinculo);
+  cb('Madre_2', v2==='Madre'); cb('Padre_2', v2==='Padre');
+  cb('Tutor_2', v2==='Tutor'); cb('Tutora_2', v2==='Tutora'); cb('Otro_3', v2==='Otro');
+  tx('Text59', ins.r2apellido); tx('Text57', ins.r2nombre);
+  tx('Text58', ins.r2dni);
+  tx('Text72', ins.r2celular); tx('Text76', ins.r2email);
+
+  return fv;
+}
+
+window.generarPDF = async (id) => {
+  const ins = inscripciones.find(i => i.id === id);
+  if (!ins) return;
+
+  const btn = document.getElementById('pdfbtn_' + id);
+  const modalBtn = document.getElementById('modalBtnPDF');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>'; }
+  if (modalBtn) { modalBtn.disabled = true; modalBtn.textContent = 'Generando...'; }
+
+  try {
+    const [PDFLib, templateBytes] = await Promise.all([loadPdfLib(), loadTemplatePDF()]);
+    const { PDFDocument } = PDFLib;
+
+    const pdfDoc = await PDFDocument.load(templateBytes);
+    const form   = pdfDoc.getForm();
+    const fields = form.getFields();
+
+    // Construir mapa de campos disponibles
+    const camposDisponibles = new Set(fields.map(f => f.getName()));
+
+    const fvList = buildFieldValues(ins);
+
+    for (const fv of fvList) {
+      if (!camposDisponibles.has(fv.name)) continue;
+      try {
+        if (fv.type === 'text') {
+          const field = form.getTextField(fv.name);
+          field.setText(fv.value);
+        } else if (fv.type === 'check') {
+          const field = form.getCheckBox(fv.name);
+          fv.value ? field.check() : field.uncheck();
+        } else if (fv.type === 'radio') {
+          const field = form.getRadioGroup(fv.name);
+          try { field.select(fv.value); } catch(e) { /* opción no disponible */ }
+        }
+      } catch(e) { /* campo con tipo incorrecto, ignorar */ }
+    }
+
+    // Aplanar para que no sea editable
+    form.flatten();
+
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `inscripcion_${ins.apellido}_${ins.nombre}.pdf`.replace(/\s+/g,'_');
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('PDF descargado ✓', 'ok');
+  } catch(e) {
+    console.error(e);
+    showToast('Error al generar el PDF: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '⬇ PDF'; }
+    if (modalBtn) { modalBtn.disabled = false; modalBtn.textContent = '⬇ Descargar PDF'; }
+  }
+};
+
+// ── DESCARGAR TODOS ───────────────────────────────────────────
+document.getElementById('btnDescargarTodos').addEventListener('click', async () => {
+  const pendientes = inscripciones.filter(i => i.estado === 'pendiente');
+  if (pendientes.length === 0) { showToast('No hay inscripciones pendientes', 'error'); return; }
+  showToast(`Generando ${pendientes.length} PDFs...`);
+  for (const ins of pendientes) {
+    await generarPDF(ins.id);
+    await new Promise(r => setTimeout(r, 800)); // pequeña pausa entre descargas
+  }
+});
+
+// ── TOAST ─────────────────────────────────────────────────────
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' '+type : '');
+  setTimeout(() => t.className = 'toast', 3000);
+}
+</script>
+</body>
+</html>
