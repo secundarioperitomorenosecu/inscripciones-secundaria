@@ -229,9 +229,21 @@ header{background:var(--az);color:#fff;position:sticky;top:0;z-index:100;box-sha
     <div class="c"><label>Entre calle</label><input type="text" id="entreCalle" placeholder="Calle 1"></div>
     <div class="c"><label>Y calle</label><input type="text" id="yCalle" placeholder="Calle 2"></div>
     <div class="c"><label>Otro dato</label><input type="text" id="otroDato" placeholder="Referencia"></div>
-    <div class="c"><label>Provincia</label><input type="text" id="provincia" placeholder="Ej: Buenos Aires"></div>
-    <div class="c"><label>Partido / Distrito</label><input type="text" id="distrito" placeholder="Ej: La Matanza"></div>
-    <div class="c"><label>Localidad <span class="r">*</span></label><input type="text" id="localidad" required placeholder="Ej: Ramos Mejía"></div>
+    <div class="c">
+      <label>Provincia</label>
+      <select id="provincia">
+        <option value="Buenos Aires">Buenos Aires</option>
+        <option value="Otra">Otra provincia</option>
+      </select>
+    </div>
+    <div class="c" id="grpDistrito">
+      <label>Partido / Distrito <span class="r">*</span></label>
+      <input type="text" id="distrito" placeholder="Ej: La Matanza">
+    </div>
+    <div class="c" id="grpLocalidad">
+      <label>Localidad <span class="r">*</span></label>
+      <input type="text" id="localidad" required placeholder="Ej: Ramos Mejía">
+    </div>
   </div>
   <hr class="sep">
   <div class="g g2">
@@ -1109,6 +1121,20 @@ document.querySelectorAll('.sb2').forEach(btn => {
     })
   )
 );
+
+// ── PROVINCIA → MOSTRAR DISTRITO/LOCALIDAD ───────────────────
+function actualizarDistritoLocalidad() {
+  const prov = document.getElementById('provincia').value;
+  const esBsAs = prov === 'Buenos Aires';
+  document.getElementById('grpDistrito').style.display = esBsAs ? '' : 'none';
+  document.getElementById('grpLocalidad').style.display = esBsAs ? '' : 'none';
+  if (!esBsAs) {
+    document.getElementById('distrito').value = '';
+    document.getElementById('localidad').value = '';
+  }
+}
+document.getElementById('provincia').addEventListener('change', actualizarDistritoLocalidad);
+actualizarDistritoLocalidad(); // ejecutar al cargar
 
 // ── PROGRESO ──────────────────────────────────────────
 const REQS = ['apellido','nombre','fechaNac','genero','tieneDni','calle','localidad','ciclo','anio','turno','condicion','r1vinculo','r1apellido','r1nombre','r1celular'];
