@@ -492,7 +492,8 @@ async function loadPdfLib() {
 
 // Carga el PDF plantilla desde el mismo directorio
 async function loadTemplatePDF() {
-  const res = await fetch('PLANILLA_INSCRIPCION_-SECUNDARIA.pdf');
+  const base = window.location.href.replace(/\/[^\/]*$/, '/');
+  const res = await fetch(base + 'PLANILLA_INSCRIPCION_-SECUNDARIA.pdf');
   if (!res.ok) throw new Error('No se pudo cargar la plantilla PDF');
   return await res.arrayBuffer();
 }
