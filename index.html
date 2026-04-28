@@ -523,7 +523,11 @@ function buildFieldValues(ins) {
   // Text5=DNI, Text6=CUIL parte1, Text8=CUIL parte2, Text9=CUIL parte3
   tx('Text5', ins.numeroDni);
   // CUIL viene como "20-21548434-4" → lo ponemos completo en Text6
-  tx('Text6', ins.cuil);
+  // CUIL viene como "20-21548434-4" → separar en 3 partes
+  const cuilParts = t(ins.cuil).split('-');
+  tx('Text6', cuilParts[0] || '');   // prefijo: 20/23/27
+  tx('Text8', cuilParts[1] || '');   // número DNI
+  tx('Text9', cuilParts[2] || '');   // dígito verificador
 
   // Text11=Nacionalidad (y=257, x=410)
   tx('Text11', ins.nacionalidad);
