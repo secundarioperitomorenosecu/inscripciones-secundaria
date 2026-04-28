@@ -69,7 +69,7 @@ header{background:var(--az);color:#fff;position:sticky;top:0;z-index:100;box-sha
 /* Fila con cod área */
 .tel-row{display:flex;gap:8px;}
 .tel-row .cod{width:80px;flex-shrink:0;}
-.tel-row input{font-size:.78rem!important;}
+.tel-row input{font-size:.8rem!important;}
 /* Botón enviar */
 .benv{width:100%;padding:15px;background:var(--az);color:#fff;border:none;border-radius:10px;font-family:'DM Serif Display',serif;font-size:1.05rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:26px;}
 .benv:hover{background:var(--azc);transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,58,107,.3);}
@@ -1135,8 +1135,15 @@ function actualizarDistritoLocalidad() {
   }
 }
 document.getElementById('provincia').addEventListener('change', actualizarDistritoLocalidad);
-actualizarDistritoLocalidad();
-setTimeout(actualizarDistritoLocalidad, 50);
+actualizarDistritoLocalidad(); // ejecutar al cargar
+
+// Auto-formato CUIL: mientras escribe, agrega guiones automáticamente
+document.getElementById('cuil').addEventListener('input', function() {
+  let v = this.value.replace(/\D/g,'').slice(0,11);
+  if (v.length > 10) v = v.slice(0,2)+'-'+v.slice(2,10)+'-'+v.slice(10);
+  else if (v.length > 2) v = v.slice(0,2)+'-'+v.slice(2);
+  this.value = v;
+});
 
 // ── PROGRESO ──────────────────────────────────────────
 const REQS = ['apellido','nombre','fechaNac','genero','tieneDni','calle','localidad','ciclo','anio','turno','condicion','r1vinculo','r1apellido','r1nombre','r1celular'];
