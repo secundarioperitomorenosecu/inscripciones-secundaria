@@ -504,12 +504,10 @@ function chk(val) {
 }
 
 function buildFieldValues(ins) {
-  // Devuelve array de {name, value, type:'text'|'check'|'radio'}
   const fv = [];
-  const t  = (v) => (v || '').toString().trim();
+  const t  = (v) => (v == null ? '' : String(v)).trim();
   const cb = (name, cond) => fv.push({ name, type:'check', value: !!cond });
-  const tx = (name, val) => fv.push({ name, type:'text', value: t(val) });
-  // Solo marca SI/NO si hay dato explícito; si está vacío, no marca ninguno
+  const tx = (name, val)  => fv.push({ name, type:'text',  value: t(val) });
   const sino = (nameSI, nameNO, val) => {
     const v = t(val);
     cb(nameSI, v === 'SI');
@@ -517,61 +515,62 @@ function buildFieldValues(ins) {
   };
 
   // ── ESTUDIANTE ──────────────────────────────────────────────
-  tx('Text1', ins.apellido); tx('Text2', ins.nombre);
+  tx('Text1', ins.apellido);
+  tx('Text2', ins.nombre);
   tx('Fecha4_af_date', ins.fechaNac);
-  tx('Text5', ins.numeroDni); tx('Text6', ins.cuil);
+  tx('Text5', ins.numeroDni);
+  tx('Text6', ins.cuil);
   tx('Text11', ins.nacionalidad);
 
   // Género
   const g = t(ins.genero);
   cb('Mujer',                           g === 'Mujer');
-  cb('Mujer trans  travesti',           g.includes('trans') && g.includes('ujer'));
+  cb('Mujer trans  travesti',           g === 'Mujer trans / travesti');
   cb('Varón',                           g === 'Varón');
-  cb('Varón trans  masculinidad trans', g.includes('trans') && g.includes('arón'));
+  cb('Varón trans  masculinidad trans', g === 'Varón trans / masculinidad trans');
   cb('No binario',                      g === 'No binario');
   cb('Otra',                            g === 'Otra');
   cb('No desea responder',              g === 'No desea responder');
 
   // Lugar de nacimiento
-  cb('En Argentina',    t(ins.lugarNac) === 'Argentina');
-  cb('En el extranjero',t(ins.lugarNac) === 'Extranjero');
-  cb('Buenos Aires',    true);
+  cb('En Argentina',     t(ins.lugarNac) === 'Argentina');
+  cb('En el extranjero', t(ins.lugarNac) === 'Extranjero');
+  cb('Buenos Aires',     true);
 
   // DNI
   const dni = t(ins.tieneDni);
-  cb('SI y tiene el DNI físico',                                   dni === 'Sí, tiene DNI físico');
-  cb('SI pero NO tiene el DNI físico y se encuentra en trámite',   dni === 'Sí, en trámite');
-  cb('SI pero NO tiene el DNI físico  y NO se encuentra en trámite', dni === 'Sí, sin trámite');
-  cb('NO posee DNI argentino',                                     dni === 'No');
+  cb('SI y tiene el DNI físico',                                      dni === 'Sí, tiene DNI físico');
+  cb('SI pero NO tiene el DNI físico y se encuentra en trámite',      dni === 'Sí, en trámite');
+  cb('SI pero NO tiene el DNI físico  y NO se encuentra en trámite',  dni === 'Sí, sin trámite');
+  cb('NO posee DNI argentino',                                        dni === 'No');
 
-  // ── DOMICILIO ────────────────────────────────────────────────
-  tx('Text12', ins.calle); tx('Text13', ins.numero); tx('Text15', ins.piso);
+  // ── DOMICILIO ESTUDIANTE ─────────────────────────────────────
+  tx('Text12', ins.calle);
+  tx('Text13', ins.numero);
+  tx('Text15', ins.piso);
+  tx('Text16_2', ins.torre);
   tx('Text17', ins.depto);
+  tx('Text19', ins.entreCalle);
+  tx('Text20', ins.yCalle);
+  tx('Text21', ins.otroDato);
   tx('Text18', ins.localidad);
-  tx('Text90', ins.distrito);
-  tx('Text19', ins.entreCalle); tx('Text20', ins.yCalle);
-  // Teléfono fijo: campo telFijo en Firebase (con cod área separado: telFijoCod)
+  tx('Text92', ins.distrito);
   tx('Text22', [ins.telFijoCod, ins.telFijo].filter(Boolean).join(' '));
-  // Celular: celularCod + celular
-  tx('Text92', [ins.celularCod, ins.celular].filter(Boolean).join(' '));
+  tx('Text90', [ins.celularCod, ins.celular].filter(Boolean).join(' '));
 
   // ── OTROS DATOS ──────────────────────────────────────────────
-  // Hijos menores — campo: hijosmenores
-  sino('SI_4', null, ins.hijosmenores);          // "NO tiene hermanas o hermanos" es checkbox separado
+  sino('SI_5', 'NO_5', ins.hijosmenores);
+  cb('SI_4', t(ins.tieneHermanos) === 'SI');
   cb('NO tiene hermanas o hermanos', t(ins.tieneHermanos) === 'NO');
-  cb('SI_4', t(ins.tieneHermanos) === 'SI');     // SI tiene hermanos
-  tx('Text86', ins.cantHermanos); tx('Text87', ins.cantHermanosEsc);
-
-  // Hijos menores de 3 años — campo: hijosmenores
-  sino('SI_5', 'NO_5', ins.hijosmenores);        // SI/NO hijos menores
-
+  tx('Text86', ins.cantHermanos);
+  tx('Text87', ins.cantHermanosEsc);
+  sino('SI_2', 'NO_3', ins.lenguasDistintas);
+  sino('SI_3', 'NO_4', ins.pueblosOriginarios);
   sino('SI_7', 'NO_7', ins.auh);
   sino('SI_8', 'NO_8', ins.progresar);
-  sino('SI_3', 'NO_4', ins.pueblosOriginarios);
-  sino('SI_2', 'NO_3', ins.lenguasDistintas);
 
-  // Transporte — campo: transporte (array de strings)
-  const tr = Array.isArray(ins.transporte) ? ins.transporte.join(' ').toLowerCase() : t(ins.transporte).toLowerCase();
+  // Transporte (viene como string con comas: "Colectivo, Tren")
+  const tr = t(ins.transporte).toLowerCase();
   cb('A pieBicicleta',           tr.includes('pie') || tr.includes('bici'));
   cb('Transporte escolar DGCyE', tr.includes('escolar'));
   cb('Colectivo',                tr.includes('colectivo'));
@@ -582,73 +581,98 @@ function buildFieldValues(ins) {
 
   // ── SALUD ─────────────────────────────────────────────────────
   sino('SI_11.0', 'NO_11', ins.obraSocial);
-  tx('Text94', ins.nombreObraSocial); tx('Text95', ins.nroAfiliado);
+  tx('Text94', ins.nombreObraSocial);
+  tx('Text95', ins.nroAfiliado);
 
-  // Antecedentes personales — objeto ins.salud, keys = nombre de condición, valor = 'SI'|'NO'
-  // El formulario guarda con los nombres exactos de COND_SALUD
+  // Antecedentes personales — ins.salud es objeto {condicion: 'SI'|'NO'}
+  // El formulario usa COND_SALUD en este orden exacto (índice 0..14):
+  // 0=Asma, 1=Celiaquía, 2=Problemas cardíacas, 3=Diabetes, 4=Presión,
+  // 5=Convulsiones, 6=Alteraciones sanguíneas, 7=Quemaduras,
+  // 8=Falta órgano, 9=Oncohematológica, 10=Inmunodeficiencias,
+  // 11=Fracturas, 12=Otro huesos, 13=Traumatismo cráneo, 14=Problemas piel
   const s = ins.salud || {};
-  const saludMap = [
-    // [clave en Firebase,                                          cbSI,            cbNO]
-    ['Asma / Broncoespasmos a repetición',                        'Check Box8.0.0','Check Box8.0.1'],
-    ['Celiaquía',                                                  'Check Box9.0.0','Check Box9.0.1'],
-    ['Problemas / Condiciones cardíacas',                          'Check Box8.1.0','Check Box8.1.1'],
-    ['Diabetes',                                                   'Check Box1.0.0','Check Box4.0.0'],
-    ['Presión arterial elevada',                                   'Check Box1.1.0','Check Box4.1.0'],
-    ['Convulsiones',                                               'Check Box1.2.0','Check Box4.2.0'],
-    ['Alteraciones sanguíneas',                                    'Check Box1.3.0','Check Box4.2.1'],
-    ['Quemaduras moderadas o severas',                             'Check Box5.0',  'Check Box5.1'],
-    ['Falta o no funcionamiento de algún órgano',                  'Check Box6.1.1','Check Box6.1.0'],
-    ['Enfermedad oncohematológica',                                'Check Box1.6.0','Check Box1.6.1'],
-    ['Inmunodeficiencias (bajas defensas) por enfermedad o medicamentos','Check Box7.0','Check Box7.1'],
-    ['Fracturas, luxaciones, lesiones ligamentarias previas',      'Check Box1.4.0','Check Box1.4.1'],
-    ['Otro problema en los huesos o articulaciones',               'Check Box1.5.0','Check Box1.5.1'],
-    ['Traumatismo de cráneo con observación en guardia o internación','Check Box1.7.0','Check Box1.7.1'],
-    ['Problemas de piel',                                          'Check Box6.0.0','Check Box6.0.1'],
-  ];
-  saludMap.forEach(([key, nameSI, nameNO]) => {
-    const val = s[key];
-    cb(nameSI, val === 'SI');
-    cb(nameNO,  val === 'NO');
+  [
+    ['Asma / Broncoespasmos a repetición',                                      'Check Box8.0.0','Check Box8.0.1'],
+    ['Celiaquía',                                                                'Check Box9.0.0','Check Box9.0.1'],
+    ['Problemas / Condiciones cardíacas',                                        'Check Box8.1.0','Check Box8.1.1'],
+    ['Diabetes',                                                                 'Check Box1.0.0','Check Box4.0.0'],
+    ['Presión arterial elevada',                                                 'Check Box1.1.0','Check Box4.1.0'],
+    ['Convulsiones',                                                             'Check Box1.2.0','Check Box4.2.0'],
+    ['Alteraciones sanguíneas',                                                  'Check Box1.3.0','Check Box4.2.1'],
+    ['Quemaduras moderadas o severas',                                           'Check Box5.0',  'Check Box5.1'],
+    ['Falta o no funcionamiento de algún órgano',                                'Check Box6.1.1','Check Box6.1.0'],
+    ['Enfermedad oncohematológica',                                              'Check Box1.6.0','Check Box1.6.1'],
+    ['Inmunodeficiencias (bajas defensas) por enfermedad o medicamentos',        'Check Box7.0',  'Check Box7.1'],
+    ['Fracturas, luxaciones, lesiones ligamentarias previas',                    'Check Box1.4.0','Check Box1.4.1'],
+    ['Otro problema en los huesos o articulaciones',                             'Check Box1.5.0','Check Box1.5.1'],
+    ['Traumatismo de cráneo con observación en guardia o internación',           'Check Box1.7.0','Check Box1.7.1'],
+    ['Problemas de piel',                                                        'Check Box6.0.0','Check Box6.0.1'],
+  ].forEach(([key, nameSI, nameNO]) => {
+    cb(nameSI, s[key] === 'SI');
+    cb(nameNO,  s[key] === 'NO');
   });
 
-  // Ejercicio — objeto ins.ejercicio
+  // Ejercicio — ins.ejercicio es objeto {condicion: 'SI'|'NO'}
   const ej = ins.ejercicio || {};
-  const ejercicioMap = [
-    ['Desmayos',                                              'Check Box10.0.0','Check Box10.0.1'],
-    ['Dolor fuerte en el pecho',                              'Check Box10.1.0','Check Box10.1.1'],
-    ['Mareos',                                                'Check Box10.2.0','Check Box10.2.1'],
-    ['Mayor cansancio que sus compañeros/as',                 'Check Box10.3.0','Check Box10.3.1'],
-    ['Palpitaciones',                                         'Check Box10.4.0','Check Box10.4.1'],
-    ['Dificultad para respirar durante o después de la actividad física','Check Box10.5.0','Check Box10.5.1'],
-  ];
-  ejercicioMap.forEach(([key, nameSI, nameNO]) => {
-    const val = ej[key];
-    cb(nameSI, val === 'SI');
-    cb(nameNO,  val === 'NO');
+  [
+    ['Desmayos',                                                              'Check Box10.0.0','Check Box10.0.1'],
+    ['Dolor fuerte en el pecho',                                              'Check Box10.1.0','Check Box10.1.1'],
+    ['Mareos',                                                                'Check Box10.2.0','Check Box10.2.1'],
+    ['Mayor cansancio que sus compañeros/as',                                 'Check Box10.3.0','Check Box10.3.1'],
+    ['Palpitaciones',                                                         'Check Box10.4.0','Check Box10.4.1'],
+    ['Dificultad para respirar durante o después de la actividad física',     'Check Box10.5.0','Check Box10.5.1'],
+  ].forEach(([key, nameSI, nameNO]) => {
+    cb(nameSI, ej[key] === 'SI');
+    cb(nameNO,  ej[key] === 'NO');
   });
 
-  // Antecedentes familiares — objeto ins.antecFamiliar
+  // Internaciones
+  sino('SI_12', 'NO_12', ins.internComun);
+  sino('SI_13', 'NO_13', ins.internIntensivos);
+  tx('Text96', ins.cantInternaciones);
+  tx('Text97', ins.causaInternacion);
+
+  // Alergias — ins.alergias es objeto {tipo: {padece:'SI'|'NO', internacion:'SI'|'NO'}}
+  const al = ins.alergias || {};
+  sino('SI_alergia', 'NO_alergia', ins.tieneAlergia);
+  [
+    ['Medicamentos',                              'SI_alg0','NO_alg0','SI_algInt0','NO_algInt0'],
+    ['Vacunas',                                   'SI_alg1','NO_alg1','SI_algInt1','NO_algInt1'],
+    ['Alimentos',                                 'SI_alg2','NO_alg2','SI_algInt2','NO_algInt2'],
+    ['Picaduras de Insectos',                     'SI_alg3','NO_alg3','SI_algInt3','NO_algInt3'],
+    ['Estacionales (Polen, ácaros, polvo, etc.)','SI_alg4','NO_alg4','SI_algInt4','NO_algInt4'],
+    ['Otras',                                     'SI_alg5','NO_alg5','SI_algInt5','NO_algInt5'],
+  ].forEach(([key, si, no, siInt, noInt]) => {
+    const a = al[key] || {};
+    cb(si,    a.padece      === 'SI');
+    cb(no,    a.padece      === 'NO');
+    cb(siInt, a.internacion === 'SI');
+    cb(noInt, a.internacion === 'NO');
+  });
+
+  // Medicación, operación, auditiva, visual
+  sino('SI_15', 'NO_15', ins.medicacion);
+  tx('undefined_45', ins.cualMedicacion);
+  sino('SI_16', 'NO_16', ins.operacion);
+  tx('undefined_46', ins.motivoOperacion);
+  tx('undefined_47', ins.anioOperacion);
+  sino('SI_17', 'NO_17', ins.dismAuditiva);
+  sino('SI_18', 'NO_18', ins.usaAudifonos);
+  sino('SI_19', 'NO_19', ins.dismVisual);
+  sino('SI_20', 'NO_20', ins.usaLentes);
+
+  // Antecedentes familiares — ins.antecFamiliar es objeto {condicion: 'SI'|'NO'}
   const af = ins.antecFamiliar || {};
-  const familiarMap = [
+  [
     ['Muerte súbita de un familiar directo menor de 50 años', 'Check Box11.0.0','Check Box11.0.1'],
     ['Diabetes',                                              'Check Box11.1.0','Check Box11.1.1'],
     ['Problemas cardíacos',                                   'Check Box11.2.0','Check Box11.2.1'],
     ['Tos crónica',                                           'Check Box11.3.0','Check Box11.3.1'],
     ['Celiaquía',                                             'Check Box11.4.0','Check Box11.4.1'],
-  ];
-  familiarMap.forEach(([key, nameSI, nameNO]) => {
-    const val = af[key];
-    cb(nameSI, val === 'SI');
-    cb(nameNO,  val === 'NO');
+  ].forEach(([key, nameSI, nameNO]) => {
+    cb(nameSI, af[key] === 'SI');
+    cb(nameNO,  af[key] === 'NO');
   });
-
-  // Medicación / operación / auditiva / visual
-  sino('SI_15', 'NO_15', ins.medicacion);
-  tx('undefined_45', ins.cualMedicacion);
-  sino('SI_16', 'NO_16', ins.operacion);
-  tx('undefined_46', ins.motivoOperacion);
-  sino('SI_17', 'NO_17', ins.dismAuditiva);
-  sino('SI_19', 'NO_19', ins.dismVisual);
 
   // ── INSCRIPCIÓN ──────────────────────────────────────────────
   const ciclo = t(ins.ciclo);
@@ -656,80 +680,140 @@ function buildFieldValues(ins) {
   cb('Ciclo Superior',                 ciclo === 'Ciclo Superior');
   cb('Aula de Fortalecimiento',        ciclo === 'Aula de Fortalecimiento');
   cb('Escuela Profesional Secundaria', ciclo === 'Escuela Profesional Secundaria');
+  tx('Text98', ins.orientacion);
 
   const anioMap = {'1':'/1','2':'/2','3':'/3','4':'/4','5':'/5','6':'/6','7':'/7'};
   fv.push({ name:'Año', type:'radio', value: anioMap[t(ins.anio)] || '/1' });
 
   const turno = t(ins.turno);
-  cb('Mañana', turno==='Mañana'); cb('Tarde', turno==='Tarde');
-  cb('Vespertino', turno==='Vespertino'); cb('Noche', turno==='Noche');
+  cb('Mañana',     turno === 'Mañana');
+  cb('Tarde',      turno === 'Tarde');
+  cb('Vespertino', turno === 'Vespertino');
+  cb('Noche',      turno === 'Noche');
+
+  const jornada = t(ins.jornada);
+  cb('Simple',                      jornada === 'Simple');
+  cb('Extendida',                   jornada === 'Extendida');
+  cb('Completa  Doble escolaridad', jornada === 'Completa / Doble escolaridad');
 
   const cond = t(ins.condicion);
   cb('Ingresante al Nivel',      cond === 'Ingresante al Nivel');
-  cb('Promovida  Promovido',     ['Promovido','Promovida'].includes(cond));
-  cb('Reinscripta  Reinscripto', ['Reinscripto','Reinscripta'].includes(cond));
+  cb('Promovida  Promovido',     cond === 'Promovido' || cond === 'Promovida');
+  cb('Reinscripta  Reinscripto', cond === 'Reinscripto' || cond === 'Reinscripta');
   cb('Repitente',                cond === 'Repitente');
 
-  // ── RESPONSABLE 1 ─────────────────────────────────────────────
+  // Establecimiento de procedencia
+  cb('Argentina_2', t(ins.procPais) === 'Argentina');
+  cb('Buenos Aires_2', t(ins.procProvincia) === 'Buenos Aires');
+  tx('Text99', ins.procDistrito);
+  tx('Text100', ins.procNivel);
+  const procSector = t(ins.procSector);
+  cb('Estatal_2', procSector === 'Estatal');
+  cb('Privado_2', procSector === 'Privado');
+  const procDep = t(ins.procDependencia);
+  cb('Oficial',   procDep === 'Oficial');
+  cb('Municipal', procDep === 'Municipal');
+  cb('Nacional',  procDep === 'Nacional');
+  cb('Privada',   procDep === 'Privada');
+  tx('Text101', ins.procEscuela);
+
+  // Inclusión
+  sino('SI_inc', 'NO_inc', ins.proyectoInclusion);
+  sino('SI_acomp', 'NO_acomp', ins.acompAsistente);
+
+  // Educación complementaria
+  sino('SI_cec', 'NO_cec', ins.asisteCec);
+  sino('SI_cef', 'NO_cef', ins.asisteCef);
+  sino('SI_est', 'NO_est', ins.asisteEstetica);
+
+  // ── RESPONSABLE 1 ────────────────────────────────────────────
   const v1 = t(ins.r1vinculo);
-  cb('Madre', v1==='Madre'); cb('Padre', v1==='Padre');
-  cb('Tutor', v1==='Tutor'); cb('Tutora', v1==='Tutora'); cb('Otro_2', v1==='Otro');
-  tx('Text3', ins.r1apellido); tx('Text7', ins.r1nombre);
-  tx('Text4', ins.r1nac);      // nacionalidad del responsable: campo r1nac
-  tx('Text16', ins.r1dni);
+  cb('Madre',   v1 === 'Madre');
+  cb('Padre',   v1 === 'Padre');
+  cb('Tutor',   v1 === 'Tutor');
+  cb('Tutora',  v1 === 'Tutora');
+  cb('Otro_2',  v1 === 'Otro');
+  tx('Text3',  ins.r1apellido);
+  tx('Text7',  ins.r1nombre);
+  tx('Text4',  ins.r1nac);
+  const r1dni = t(ins.r1tieneDni);
+  cb('SI y tiene el DNI físico_2',   r1dni === 'Sí, tiene DNI físico');
+  cb('SI pero NO tiene el DNI_2',    r1dni === 'Sí, en trámite');
+  cb('NO posee DNI argentino_2',     r1dni === 'No');
+  tx('Text8',  ins.r1dni);
   tx('Text25', ins.r1ocupacion);
   sino('SI_37', 'NO_37', ins.r1asistioEduc);
-  // Nivel educativo R1
-  const r1nivel = t(ins.r1nivelEduc);
-  cb('Primario',               r1nivel === 'Primario');
-  cb('Secundario',             r1nivel === 'Secundario');
-  cb('Superior',               r1nivel === 'Superior');
-  cb('Superior Universitario', r1nivel === 'Superior Universitario');
-  cb('Posgrado',               r1nivel === 'Posgrado');
+  const r1niv = t(ins.r1nivelEduc);
+  cb('Primario',               r1niv === 'Primario');
+  cb('Secundario',             r1niv === 'Secundario');
+  cb('Superior',               r1niv === 'Superior');
+  cb('Superior Universitario', r1niv === 'Superior Universitario');
+  cb('Posgrado',               r1niv === 'Posgrado');
   sino('SI_38', 'NO_38', ins.r1completoNivel);
-  // Actividad R1 — array de strings
-  const r1act = Array.isArray(ins.r1actividad) ? ins.r1actividad.join(' ') : t(ins.r1actividad);
-  cb('Estudia',                           r1act.includes('Estudi'));
-  cb('Trabaja',                           r1act.includes('Trabaj'));
-  cb('Busca trabajo',                     r1act.includes('Busca'));
-  cb('Realiza tareas de cuidado no pagas',r1act.includes('cuidado'));
-  cb('Recibe jubilación o pensión',       r1act.includes('jubilaci'));
-  // Convive R1 — por defecto SI, no marcar nada si no hay dato
+  // Actividad R1 (viene como string con comas)
+  const r1act = t(ins.r1actividad).toLowerCase();
+  cb('Estudia',                            r1act.includes('estudi'));
+  cb('Trabaja',                            r1act.includes('trabaj'));
+  cb('Busca trabajo',                      r1act.includes('busca'));
+  cb('Realiza tareas de cuidado no pagas', r1act.includes('cuidado'));
+  cb('Recibe jubilación o pensión',        r1act.includes('jubilaci'));
+  // Convive R1
   const r1conv = t(ins.r1convive) || 'SI';
   cb('SI_36', r1conv === 'SI');
   cb('NO_36', r1conv === 'NO');
-  // Teléfonos R1
+  // Domicilio R1 (solo si no convive)
+  tx('Text40', ins.r1calle);
+  tx('Text41', ins.r1numero);
+  tx('Text42', ins.r1entreCalle);
+  tx('Text43', ins.r1yCalle);
+  tx('Text44', ins.r1localidad);
+  tx('Text45', ins.r1distrito);
   tx('Text47', [ins.r1telFijoCod, ins.r1telFijo].filter(Boolean).join(' '));
   tx('Text48', [ins.r1celularCod, ins.r1celular].filter(Boolean).join(' '));
   tx('Text49', ins.r1email);
 
-  // ── RESPONSABLE 2 ─────────────────────────────────────────────
+  // ── RESPONSABLE 2 ────────────────────────────────────────────
   const v2 = t(ins.r2vinculo);
-  cb('Madre_2', v2==='Madre'); cb('Padre_2', v2==='Padre');
-  cb('Tutor_2', v2==='Tutor'); cb('Tutora_2', v2==='Tutora'); cb('Otro_3', v2==='Otro');
-  tx('Text59', ins.r2apellido); tx('Text57', ins.r2nombre);
+  cb('Madre_2',  v2 === 'Madre');
+  cb('Padre_2',  v2 === 'Padre');
+  cb('Tutor_2',  v2 === 'Tutor');
+  cb('Tutora_2', v2 === 'Tutora');
+  cb('Otro_3',   v2 === 'Otro');
+  tx('Text59', ins.r2apellido);
+  tx('Text57', ins.r2nombre);
+  tx('Text60', ins.r2nac);
+  const r2dni = t(ins.r2tieneDni);
+  cb('SI y tiene el DNI físico_3',  r2dni === 'Sí, tiene DNI físico');
+  cb('SI pero NO tiene el DNI_3',   r2dni === 'Sí, en trámite');
+  cb('NO posee DNI argentino_3',    r2dni === 'No');
   tx('Text58', ins.r2dni);
+  tx('Text61', ins.r2ocupacion);
   sino('SI_39', 'NO_39', ins.r2asistioEduc);
-  // Nivel educativo R2
-  const r2nivel = t(ins.r2nivelEduc);
-  cb('Primario_2',               r2nivel === 'Primario');
-  cb('Secundario_2',             r2nivel === 'Secundario');
-  cb('Superior_2',               r2nivel === 'Superior');
-  cb('Superior Universitario_2', r2nivel === 'Superior Universitario');
-  cb('Posgrado_2',               r2nivel === 'Posgrado');
+  const r2niv = t(ins.r2nivelEduc);
+  cb('Primario_2',               r2niv === 'Primario');
+  cb('Secundario_2',             r2niv === 'Secundario');
+  cb('Superior_2',               r2niv === 'Superior');
+  cb('Superior Universitario_2', r2niv === 'Superior Universitario');
+  cb('Posgrado_2',               r2niv === 'Posgrado');
   sino('SI_40', 'NO_40', ins.r2completoNivel);
   // Actividad R2
-  const r2act = Array.isArray(ins.r2actividad) ? ins.r2actividad.join(' ') : t(ins.r2actividad);
-  cb('Estudia_2',                           r2act.includes('Estudi'));
-  cb('Trabaja_2',                           r2act.includes('Trabaj'));
-  cb('Busca trabajo_2',                     r2act.includes('Busca'));
-  cb('Realiza tareas de cuidado no pagas_2',r2act.includes('cuidado'));
-  cb('Recibe jubilación o pensión_2',       r2act.includes('jubilaci'));
+  const r2act = t(ins.r2actividad).toLowerCase();
+  cb('Estudia_2',                            r2act.includes('estudi'));
+  cb('Trabaja_2',                            r2act.includes('trabaj'));
+  cb('Busca trabajo_2',                      r2act.includes('busca'));
+  cb('Realiza tareas de cuidado no pagas_2', r2act.includes('cuidado'));
+  cb('Recibe jubilación o pensión_2',        r2act.includes('jubilaci'));
   // Convive R2
   const r2conv = t(ins.r2convive) || 'SI';
   cb('SI_41', r2conv === 'SI');
   cb('NO_41', r2conv === 'NO');
-  // Teléfonos R2
+  // Domicilio R2
+  tx('Text62', ins.r2calle);
+  tx('Text63', ins.r2numero);
+  tx('Text64', ins.r2entreCalle);
+  tx('Text65', ins.r2yCalle);
+  tx('Text66', ins.r2localidad);
+  tx('Text67', ins.r2distrito);
   tx('Text72', [ins.r2celularCod, ins.r2celular].filter(Boolean).join(' '));
   tx('Text76', ins.r2email);
 
