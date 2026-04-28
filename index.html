@@ -508,394 +508,300 @@ function buildFieldValues(ins) {
   const t  = (v) => (v == null ? '' : String(v)).trim();
   const cb = (name, cond) => fv.push({ name, type:'check', value: !!cond });
   const tx = (name, val)  => fv.push({ name, type:'text',  value: t(val) });
-  const sino = (nameSI, nameNO, val) => {
-    const v = t(val);
-    cb(nameSI, v === 'SI');
-    if (nameNO) cb(nameNO, v === 'NO');
-  };
+  const sino = (si, no, val) => { const v=t(val); cb(si,v==='SI'); if(no) cb(no,v==='NO'); };
 
-  // ── PÁGINA 1: DATOS ESTUDIANTE ──────────────────────────────
-  // Text1=Apellido, Text2=Nombre, Fecha4=FechaNac
+  // ══ PÁGINA 1: DATOS ESTUDIANTE ══════════════════════════════
   tx('Text1', ins.apellido);
   tx('Text2', ins.nombre);
   tx('Fecha4_af_date', ins.fechaNac);
-
-  // Text5=DNI, Text6=CUIL parte1, Text8=CUIL parte2, Text9=CUIL parte3
   tx('Text5', ins.numeroDni);
-  // CUIL viene como "20-21548434-4" → lo ponemos completo en Text6
-  // CUIL viene como "20-21548434-4" → separar en 3 partes
-  const cuilParts = t(ins.cuil).split('-');
-  tx('Text6', cuilParts[0] || '');   // prefijo: 20/23/27
-  tx('Text8', cuilParts[1] || '');   // número DNI
-  tx('Text9', cuilParts[2] || '');   // dígito verificador
-
-  // Text11=Nacionalidad (y=257, x=410)
+  // CUIL: "20-21548434-4" → 3 campos separados
+  const cp = t(ins.cuil).split('-');
+  tx('Text6', cp[0]||''); tx('Text8', cp[1]||''); tx('Text9', cp[2]||'');
   tx('Text11', ins.nacionalidad);
+  tx('Text10', ins.provinciaNac); // "Otra" provincia de nacimiento
 
-  // DNI checkboxes
+  // DNI
   const dni = t(ins.tieneDni);
-  cb('SI y tiene el DNI físico',                                     dni === 'Sí, tiene DNI físico');
-  cb('SI pero NO tiene el DNI físico y se encuentra en trámite',     dni === 'Sí, en trámite');
-  cb('SI pero NO tiene el DNI físico  y NO se encuentra en trámite', dni === 'Sí, sin trámite');
-  cb('NO posee DNI argentino',                                       dni === 'No');
+  cb('SI y tiene el DNI físico',                                     dni==='Sí, tiene DNI físico');
+  cb('SI pero NO tiene el DNI físico y se encuentra en trámite',     dni==='Sí, en trámite');
+  cb('SI pero NO tiene el DNI físico  y NO se encuentra en trámite', dni==='Sí, sin trámite');
+  cb('NO posee DNI argentino',                                       dni==='No');
 
   // Género
   const g = t(ins.genero);
-  cb('Mujer',                           g === 'Mujer');
-  cb('Mujer trans  travesti',           g === 'Mujer trans / travesti');
-  cb('Varón',                           g === 'Varón');
-  cb('Varón trans  masculinidad trans', g === 'Varón trans / masculinidad trans');
-  cb('No binario',                      g === 'No binario');
-  cb('Otra',                            g === 'Otra');
-  cb('No desea responder',              g === 'No desea responder');
+  cb('Mujer',                           g==='Mujer');
+  cb('Mujer trans  travesti',           g==='Mujer trans / travesti');
+  cb('Varón',                           g==='Varón');
+  cb('Varón trans  masculinidad trans', g==='Varón trans / masculinidad trans');
+  cb('No binario',                      g==='No binario');
+  cb('Otra',                            g==='Otra');
+  cb('No desea responder',              g==='No desea responder');
 
   // Lugar de nacimiento
-  cb('En Argentina',    t(ins.lugarNac) === 'Argentina');
-  cb('En el extranjero',t(ins.lugarNac) === 'Extranjero');
-  cb('Buenos Aires', true);
-  tx('Text10', ins.provinciaNac); // "Otra provincia" si aplica
+  cb('En Argentina',    t(ins.lugarNac)==='Argentina');
+  cb('En el extranjero',t(ins.lugarNac)==='Extranjero');
+  cb('Buenos Aires',    true);
 
-  // ── DOMICILIO ESTUDIANTE ─────────────────────────────────────
-  // Text12=Calle(y=315,x=100), Text13=Número(y=317,x=294)
-  // Text14=Piso(y=317,x=369), Text15=Torre(y=316,x=449), Text17=Depto(y=314,x=538)
-  tx('Text12', ins.calle);
-  tx('Text13', ins.numero);
-  tx('Text14', ins.piso);
-  tx('Text15', ins.torre);
-  tx('Text17', ins.depto);
-
-  // Text18=EntreCalle(y=335,x=62), Text19=YCalle(y=335,x=233)
-  // Text20=OtroDato(y=336,x=431)
-  tx('Text18', ins.entreCalle);
-  tx('Text19', ins.yCalle);
-  tx('Text20', ins.otroDato);
-
-  // Text21=Provincia(y=355,x=63), Text22=Distrito(y=354,x=238), Text23=Localidad(y=355,x=431)
-  tx('Text21', ins.provincia || 'Buenos Aires');
-  tx('Text22', ins.distrito);
-  tx('Text23', ins.localidad);
-
-  // Text90=CodAreaFijo(y=374,x=101), Text91=TelFijo(y=374,x=149)
-  // Text93=CodAreaCelular(y=374,x=374), Text92=Celular(y=375,x=423)
-  tx('Text90', ins.telFijoCod);
-  tx('Text91', ins.telFijo);
-  tx('Text93', ins.celularCod);
-  tx('Text92', ins.celular);
-
-  // ── OTROS DATOS ──────────────────────────────────────────────
-  // Text88=Distrito(y=293,x=250) → solo para quienes marcaron Bs As
-  // Text89=Localidad(y=294,x=437) → solo para quienes marcaron Bs As
+  // Domicilio estudiante
+  tx('Text12', ins.calle);   tx('Text13', ins.numero);
+  tx('Text14', ins.piso);    tx('Text15', ins.torre);    tx('Text17', ins.depto);
+  tx('Text18', ins.entreCalle); tx('Text19', ins.yCalle); tx('Text20', ins.otroDato);
+  tx('Text21', ins.provincia||'Buenos Aires');
+  tx('Text22', ins.distrito);   // Distrito (x=238)
+  tx('Text23', ins.localidad);  // Localidad (x=431)
+  // Solo para quienes marcaron Bs As (y=293): Text88=Distrito, Text89=Localidad
   tx('Text88', ins.distrito);
   tx('Text89', ins.localidad);
+  // Teléfonos: Text90=CodFijo, Text91=Fijo, Text93=CodCel, Text92=Celular
+  tx('Text90', ins.telFijoCod); tx('Text91', ins.telFijo);
+  tx('Text93', ins.celularCod); tx('Text92', ins.celular);
 
-  // Text86=CantHermanos(y=416,x=422), Text87=CantHermanosEsc(y=412,x=197)
-  cb('SI_4', t(ins.tieneHermanos) === 'SI');
-  cb('NO tiene hermanas o hermanos', t(ins.tieneHermanos) === 'NO');
-  tx('Text86', ins.cantHermanos);
-  tx('Text87', ins.cantHermanosEsc);
-
-  // Hijos menores de 3 años
-  sino('SI_5', 'NO_5', ins.hijosmenores);
-
-  sino('SI_2', 'NO_3', ins.lenguasDistintas);
-  sino('SI_3', 'NO_4', ins.pueblosOriginarios);
-  sino('SI_7', 'NO_7', ins.auh);
-  sino('SI_8', 'NO_8', ins.progresar);
+  // Otros datos
+  cb('SI_4', t(ins.tieneHermanos)==='SI');
+  cb('NO tiene hermanas o hermanos', t(ins.tieneHermanos)==='NO');
+  tx('Text87', ins.cantHermanos); tx('Text86', ins.cantHermanosEsc);
+  // SI_5/NO_5 = lenguas distintas (y=458)
+  sino('SI_2','NO_3', ins.lenguasDistintas);
+  // SI_3/NO_4 = pueblos originarios (y=496)
+  sino('SI_3','NO_4', ins.pueblosOriginarios);
+  // Hijos menores: SI_9/NO_9 (y=590, x=195/225)
+  sino('SI_9','NO_9', ins.hijosmenores);
+  // AUH: SI_7/NO_7; Progresar: SI_8/NO_8
+  sino('SI_7','NO_7', ins.auh);
+  sino('SI_8','NO_8', ins.progresar);
 
   // Transporte
   const tr = t(ins.transporte).toLowerCase();
-  cb('A pieBicicleta',           tr.includes('pie') || tr.includes('bici'));
+  cb('A pieBicicleta',           tr.includes('pie')||tr.includes('bici'));
   cb('Transporte escolar DGCyE', tr.includes('escolar'));
   cb('Colectivo',                tr.includes('colectivo'));
   cb('Tren',                     tr.includes('tren'));
   cb('Vehículo particular',      tr.includes('particular'));
-  cb('TaxiRemis',                tr.includes('taxi') || tr.includes('remis'));
+  cb('TaxiRemis',                tr.includes('taxi')||tr.includes('remis'));
   cb('Otro',                     tr.includes('otro'));
 
-  // ── SALUD ────────────────────────────────────────────────────
-  // Text94=NombreObraSocial(y=625,x=308), Text95=NroAfiliado(y=626,x=444)
-  sino('SI_11.0', 'NO_11', ins.obraSocial);
-  tx('Text94', ins.nombreObraSocial);
-  tx('Text95', ins.nroAfiliado);
+  // Obra social: SI_11.0/NO_11
+  sino('SI_11.0','NO_11', ins.obraSocial);
+  tx('Text94', ins.nombreObraSocial); tx('Text95', ins.nroAfiliado);
 
-  // Antecedentes personales — ins.salud[condicion] = 'SI'|'NO'
+  // Antecedentes personales salud — Check Box1.x.0=SI, Check Box1.x.1=NO (columna izq)
+  // Check Box4.x.0=SI, Check Box4.x.1=NO (columna der)
   const s = ins.salud || {};
   [
-    ['Asma / Broncoespasmos a repetición',                               'SI_14','NO_14'],
-    ['Celiaquía',                                                         'SI_15','NO_15'],
-    ['Problemas / Condiciones cardíacas',                                 'SI_16','NO_16'],
-    ['Diabetes',                                                          'SI_17','NO_17'],
-    ['Presión arterial elevada',                                          'SI_18','NO_18'],
-    ['Convulsiones',                                                      'SI_19','NO_19'],
-    ['Alteraciones sanguíneas',                                           'SI_20','NO_20'],
-    ['Quemaduras moderadas o severas',                                    'SI_21','NO_21'],
-    ['Falta o no funcionamiento de algún órgano',                         'SI_22','NO_22'],
-    ['Enfermedad oncohematológica',                                       'SI_23','NO_23'],
-    ['Inmunodeficiencias (bajas defensas) por enfermedad o medicamentos', 'SI_24','NO_24'],
-    ['Fracturas, luxaciones, lesiones ligamentarias previas',             'SI_25','NO_25'],
-    ['Otro problema en los huesos o articulaciones',                      'SI_26','NO_26'],
-    ['Traumatismo de cráneo con observación en guardia o internación',    'SI_28','NO_28'],
-    ['Problemas de piel',                                                 'SI_29','NO_29'],
-  ].forEach(([key, nameSI, nameNO]) => {
-    cb(nameSI, s[key] === 'SI');
-    cb(nameNO,  s[key] === 'NO');
-  });
+    ['Asma / Broncoespasmos a repetición',                               'Check Box8.0.0','Check Box8.0.1'],
+    ['Celiaquía',                                                         'Check Box8.1.0','Check Box8.1.1'],
+    ['Problemas / Condiciones cardíacas',                                 'Check Box8.2.0','Check Box8.2.1'],
+    ['Diabetes',                                                          'Check Box1.0.0','Check Box1.0.1'],
+    ['Presión arterial elevada',                                          'Check Box1.1.0','Check Box1.1.1'],
+    ['Convulsiones',                                                      'Check Box1.2.0','Check Box1.2.1'],
+    ['Alteraciones sanguíneas',                                           'Check Box1.3.0','Check Box1.3.1'],
+    ['Quemaduras moderadas o severas',                                    'Check Box5.0',  'Check Box5.1'],
+    ['Falta o no funcionamiento de algún órgano',                         'Check Box9.0.0','Check Box9.0.1'],
+    ['Enfermedad oncohematológica',                                       'Check Box9.1.0','Check Box9.1.1'],
+    ['Inmunodeficiencias (bajas defensas) por enfermedad o medicamentos', 'Check Box9.2.0','Check Box9.2.1'],
+    ['Fracturas, luxaciones, lesiones ligamentarias previas',             'Check Box1.4.0','Check Box1.4.1'],
+    ['Otro problema en los huesos o articulaciones',                      'Check Box1.5.0','Check Box1.5.1'],
+    ['Traumatismo de cráneo con observación en guardia o internación',    'Check Box1.6.0','Check Box1.6.1'],
+    ['Problemas de piel',                                                 'Check Box1.7.0','Check Box1.7.1'],
+  ].forEach(([k,si,no]) => { cb(si,s[k]==='SI'); cb(no,s[k]==='NO'); });
 
-  // ── PÁGINA 2 ─────────────────────────────────────────────────
-  // Ejercicio — ins.ejercicio[condicion] = 'SI'|'NO'
+  // ══ PÁGINA 2 ════════════════════════════════════════════════
+  // Ejercicio — Check Box20.x, Check Box22.x (col izq) / Check Box23.x, Check Box24.x (col der)
   const ej = ins.ejercicio || {};
   [
-    ['Desmayos',                                                           'SI_30','NO_30'],
-    ['Dolor fuerte en el pecho',                                           'SI_31','NO_31'],
-    ['Mareos',                                                             'SI_32','NO_32'],
-    ['Mayor cansancio que sus compañeros/as',                              'SI_33','NO_33'],
-    ['Palpitaciones',                                                      'SI_34','NO_34'],
-    ['Dificultad para respirar durante o después de la actividad física',  'SI_35','NO_35'],
-  ].forEach(([key, nameSI, nameNO]) => {
-    cb(nameSI, ej[key] === 'SI');
-    cb(nameNO,  ej[key] === 'NO');
-  });
+    ['Desmayos',                                                          'Check Box20.0','Check Box22.0'],
+    ['Dolor fuerte en el pecho',                                          'Check Box20.1','Check Box22.1'],
+    ['Mareos',                                                            'Check Box20.2','Check Box22.2'],
+    ['Mayor cansancio que sus compañeros/as',                             'Check Box23.0','Check Box24.0'],
+    ['Palpitaciones',                                                     'Check Box23.1','Check Box24.1'],
+    ['Dificultad para respirar durante o después de la actividad física', 'Check Box23.2','Check Box24.2'],
+  ].forEach(([k,si,no]) => { cb(si,ej[k]==='SI'); cb(no,ej[k]==='NO'); });
 
-  // Internaciones
-  // SI_13/NO_13 = internación sala común; campos de texto: Cuántas veces, Indique causas
-  sino('SI_13', null, ins.internComun);   // SI_13 y NO_13 son campos de texto en el PDF (raros)
-  sino('Internación en sala de cuidados intermediosintensivos', null, ins.internIntensivos);
-  tx('Cuántas veces', ins.cantInternaciones);
-  tx('Indique las causas o diagnósticos', ins.causaInternacion);
+  // Internaciones — SI_13/NO_13 son Text en el PDF (raro), Check Box10/11/12/13
+  cb('Check Box10', t(ins.internComun)==='SI');
+  cb('Check Box12', t(ins.internComun)==='NO');
+  cb('Check Box11', t(ins.internIntensivos)==='SI');
+  cb('Check Box13', t(ins.internIntensivos)==='NO');
+  tx('Cuántas veces',                        ins.cantInternaciones);
+  tx('Indique las causas o diagnósticos',    ins.causaInternacion);
+  tx('Cuántas veces_2',                      ins.cantInternaciones2);
+  tx('Indique las causas o diagnósticos_2',  ins.causaInternacion2);
 
-  // Alergias — ins.alergias[tipo] = {padece:'SI'|'NO', internacion:'SI'|'NO'}
+  // Alergias — SI_14/NO_14 = tiene alergia grave (y=173)
+  sino('SI_14','NO_14', ins.tieneAlergia);
+  // Tipos de alergia: Check Box14..19 (col SI/NO), Check Box25.x/26.x (internación)
   const al = ins.alergias || {};
-  sino('SI_10', 'NO_10', ins.tieneAlergia);
-  // undefined_28..51 son los checkboxes de alergias en orden:
-  // Medicamentos: SI=undefined_28 NO=undefined_29 Int_SI=SI_27.0 Int_NO=NO_26
-  // Vacunas:      SI=undefined_30 NO=undefined_31 Int_SI=undefined_56.0 Int_NO=undefined_57
-  // Alimentos:    SI=undefined_34 NO=undefined_35 Int_SI=undefined_36 Int_NO=undefined_37 (page2 y=82)
-  // Picaduras:    SI=undefined_43 NO=undefined_44
-  // Estacionales: SI=undefined_45 NO=undefined_46 Int_NO=undefined_47
-  // Otras:        SI=undefined_48 NO=undefined_49 Int_SI=undefined_50 Int_NO=undefined_51
   [
-    ['Medicamentos',                              'undefined_28','undefined_29','SI_27.0','NO_26'],
-    ['Vacunas',                                   'undefined_30','undefined_31','undefined_56.0','undefined_57'],
-    ['Alimentos',                                 'undefined_34','undefined_35','undefined_36','undefined_37'],
-    ['Picaduras de Insectos',                     'undefined_43','undefined_44','undefined_45','undefined_46'],
-    ['Estacionales (Polen, ácaros, polvo, etc.)','undefined_47','undefined_48','undefined_49','undefined_50'],
-    ['Otras',                                     'undefined_41','undefined_42','undefined_51','SI_27.1'],
-  ].forEach(([key, si, no, siInt, noInt]) => {
-    const a = al[key] || {};
-    cb(si,    a.padece      === 'SI');
-    cb(no,    a.padece      === 'NO');
-    cb(siInt, a.internacion === 'SI');
-    cb(noInt, a.internacion === 'NO');
+    ['Medicamentos',                              'Check Box14','Check Box17','Check Box25.0','Check Box26.0'],
+    ['Vacunas',                                   'Check Box15','Check Box18','Check Box25.1','Check Box26.1'],
+    ['Alimentos',                                 'Check Box16','Check Box19','Check Box25.2','Check Box26.2'],
+    ['Picaduras de Insectos',                     'Check Box20.0','Check Box22.0','Check Box29.0.0','Check Box29.0.1'],
+    ['Estacionales (Polen, ácaros, polvo, etc.)','Check Box20.1','Check Box22.1','Check Box29.1.0','Check Box29.1.1'],
+    ['Otras',                                     'Check Box20.2','Check Box22.2','Check Box29.2.0','Check Box29.2.1'],
+  ].forEach(([k,si,no,siI,noI]) => {
+    const a=al[k]||{};
+    cb(si,  a.padece==='SI'); cb(no,  a.padece==='NO');
+    cb(siI, a.internacion==='SI'); cb(noI, a.internacion==='NO');
   });
 
-  // Medicación, operación, auditiva, visual
-  sino('SI_2', 'NO_2', ins.medicacion);
-  tx('undefined_45', ins.cualMedicacion);
-  sino('SI_9', 'NO_9', ins.operacion);
-  tx('undefined_46', ins.motivoOperacion);
-  tx('undefined_47', ins.anioOperacion);
-  sino('SI_6', 'NO_6', ins.dismAuditiva);
-  sino('SI_2', 'NO_2', ins.usaAudifonos);
-  sino('SI_2', 'NO_2', ins.dismVisual);
-  sino('SI_2', 'NO_2', ins.usaLentes);
+  // SI_15 = disminución auditiva (y=205, x=212); SI_16/NO_16 = usa audífonos
+  sino('SI_15',null,    ins.dismAuditiva);
+  sino('SI_16','NO_16', ins.usaAudifonos);
+  // SI_17 = disminución visual (y=222, x=212); SI_18/NO_18 = usa lentes
+  sino('SI_17',null,    ins.dismVisual);
+  sino('SI_18','NO_18', ins.usaLentes);
+  // SI_19/NO_20 = medicación habitual (y=238, x=212/504)
+  sino('SI_19','NO_20', ins.medicacion);
+  tx('undefined_41', ins.cualMedicacion);
+  // SI_21/NO_21 = operación (y=262, x=147/173)
+  sino('SI_21','NO_21', ins.operacion);
+  tx('Text42', ins.motivoOperacion);
 
-  // Antecedentes familiares — ins.antecFamiliar[condicion] = 'SI'|'NO'
+  // Antecedentes familiares — Check Box29.x.0/1 no, usar SI_22..26/NO_22..25
   const af = ins.antecFamiliar || {};
   [
-    ['Muerte súbita de un familiar directo menor de 50 años', 'SI_36','NO_36'],
-    ['Diabetes',                                              'SI_37','NO_37'],
-    ['Problemas cardíacos',                                   'SI_38','NO_38'],
-    ['Tos crónica',                                           'SI_39','NO_39'],
-    ['Celiaquía',                                             'SI_40','NO_40'],
-  ].forEach(([key, nameSI, nameNO]) => {
-    cb(nameSI, af[key] === 'SI');
-    cb(nameNO,  af[key] === 'NO');
-  });
+    ['Muerte súbita de un familiar directo menor de 50 años','SI_22','NO_22'],
+    ['Diabetes',                                             'SI_23','NO_23'],
+    ['Problemas cardíacos',                                  'SI_24','NO_24'],
+    ['Tos crónica',                                          'SI_25','NO En caso af'],
+    ['Celiaquía',                                            'SI_26','NO_25'],
+  ].forEach(([k,si,no]) => { cb(si,af[k]==='SI'); cb(no,af[k]==='NO'); });
 
-  // Text27=NombreEscuela(p2,y=338), Text28=NroEscuela(p2,y=340)
-  // Text30=NombreEscuelaProc(p2,y=488), Text37=DistritoProc(p2,y=636)
-  // Text38=NombreEscuelaProc2(p2,y=636)
-  tx('Text37', ins.procDistrito);
-  tx('Text38', ins.procEscuela);
-  cb('Buenos Aires_2', t(ins.procProvincia) === 'Buenos Aires');
-  cb('Estatal_2', t(ins.procSector) === 'Estatal');
-  cb('Privado_2', t(ins.procSector) === 'Privado');
-  cb('Oficial',   t(ins.procDependencia) === 'Oficial');
-  cb('Municipal', t(ins.procDependencia) === 'Municipal');
-  cb('Nacional',  t(ins.procDependencia) === 'Nacional');
-  cb('Privada',   t(ins.procDependencia) === 'Privada');
+  // Establecimiento procedencia
+  tx('Text37', ins.procDistrito); tx('Text38', ins.procEscuela);
+  tx('Text39', ins.procNivel);
+  tx('Text40', ins.procEscuelaNombre); tx('Text41', ins.procEscuelaNro);
+  cb('Buenos Aires_2', t(ins.procProvincia)==='Buenos Aires');
+  cb('Estatal_2',  t(ins.procSector)==='Estatal');
+  cb('Privado_2',  t(ins.procSector)==='Privado');
+  cb('Oficial',    t(ins.procDependencia)==='Oficial');
+  cb('Municipal',  t(ins.procDependencia)==='Municipal');
+  cb('Nacional',   t(ins.procDependencia)==='Nacional');
+  cb('Privada',    t(ins.procDependencia)==='Privada');
+  tx('Text27', ins.escuelaNombre); tx('Text28', ins.escuelaNro);
 
-  // ── INSCRIPCIÓN ──────────────────────────────────────────────
+  // Inscripción
   const ciclo = t(ins.ciclo);
-  cb('Ciclo Básico',                   ciclo === 'Ciclo Básico');
-  cb('Ciclo Superior',                 ciclo === 'Ciclo Superior');
-  cb('Aula de Fortalecimiento',        ciclo === 'Aula de Fortalecimiento');
-  cb('Escuela Profesional Secundaria', ciclo === 'Escuela Profesional Secundaria');
+  cb('Ciclo Básico',                   ciclo==='Ciclo Básico');
+  cb('Ciclo Superior',                 ciclo==='Ciclo Superior');
+  cb('Aula de Fortalecimiento',        ciclo==='Aula de Fortalecimiento');
+  cb('Escuela Profesional Secundaria', ciclo==='Escuela Profesional Secundaria');
+  const am = {'1':'/1','2':'/2','3':'/3','4':'/4','5':'/5','6':'/6','7':'/7'};
+  fv.push({name:'Año',type:'radio',value:am[t(ins.anio)]||'/1'});
+  const turno=t(ins.turno);
+  cb('Mañana',turno==='Mañana'); cb('Tarde',turno==='Tarde');
+  cb('Vespertino',turno==='Vespertino'); cb('Noche',turno==='Noche');
+  const jornada=t(ins.jornada);
+  cb('Simple',jornada==='Simple'); cb('Extendida',jornada==='Extendida');
+  cb('Completa  Doble escolaridad',jornada==='Completa / Doble escolaridad');
 
-  const anioMap = {'1':'/1','2':'/2','3':'/3','4':'/4','5':'/5','6':'/6','7':'/7'};
-  fv.push({ name:'Año', type:'radio', value: anioMap[t(ins.anio)] || '/1' });
+  // ══ PÁGINA 3 ════════════════════════════════════════════════
+  const cond=t(ins.condicion);
+  cb('Ingresante al Nivel',      cond==='Ingresante al Nivel');
+  cb('Promovida  Promovido',     cond==='Promovido'||cond==='Promovida');
+  cb('Reinscripta  Reinscripto', cond==='Reinscripto'||cond==='Reinscripta');
+  cb('Repitente',                cond==='Repitente');
 
-  const turno = t(ins.turno);
-  cb('Mañana', turno==='Mañana'); cb('Tarde', turno==='Tarde');
-  cb('Vespertino', turno==='Vespertino'); cb('Noche', turno==='Noche');
+  // Inclusión: SI_28/NO_27; acompañante: SI_29/NO_28
+  sino('SI_28','NO_27', ins.proyectoInclusion);
+  sino('SI_29','NO_28', ins.acompAsistente);
+  // Educación complementaria: SI_30/NO_29=CEC, SI_31/NO_30=CEF, SI_32/NO_31=Estética
+  sino('SI_30','NO_29', ins.asisteCec);
+  sino('SI_31','NO_30', ins.asisteCef);
+  sino('SI_32','NO_31', ins.asisteEstetica);
 
-  const jornada = t(ins.jornada);
-  cb('Simple',                      jornada === 'Simple');
-  cb('Extendida',                   jornada === 'Extendida');
-  cb('Completa  Doble escolaridad', jornada === 'Completa / Doble escolaridad');
-
-  const cond = t(ins.condicion);
-  cb('Ingresante al Nivel',      cond === 'Ingresante al Nivel');
-  cb('Promovida  Promovido',     cond === 'Promovido' || cond === 'Promovida');
-  cb('Reinscripta  Reinscripto', cond === 'Reinscripto' || cond === 'Reinscripta');
-  cb('Repitente',                cond === 'Repitente');
-
-  // Inclusión / educación complementaria
-  sino('SI_41', 'NO_41', ins.proyectoInclusion);
-  sino('SI_2',  'NO_2',  ins.acompAsistente);
-  sino('SI_2',  'NO_2',  ins.asisteCec);
-  sino('SI_2',  'NO_2',  ins.asisteCef);
-  sino('SI_2',  'NO_2',  ins.asisteEstetica);
-
-  // ── PÁGINA 3: RESPONSABLE 1 ──────────────────────────────────
-  // Text3=Apellido(y=434,x=63), Text4=Nombre(y=432,x=272), Text7=Nacionalidad(y=431,x=491)
-  const v1 = t(ins.r1vinculo);
-  cb('Madre',  v1==='Madre'); cb('Padre',  v1==='Padre');
-  cb('Tutor',  v1==='Tutor'); cb('Tutora', v1==='Tutora'); cb('Otro_2', v1==='Otro');
-  tx('Text3', ins.r1apellido);
-  tx('Text4', ins.r1nombre);
-  tx('Text7', ins.r1nac);
-
-  // Text16=DNI R1(y=473,x=236)
-  const r1dni = t(ins.r1tieneDni);
-  cb('SI y tiene el DNI físico_2', r1dni === 'Sí, tiene DNI físico');
-  cb('SI pero NO tiene el DNI físico_2', r1dni === 'Sí, en trámite');
-  cb('NO posee DNI argentino_2', r1dni === 'No');
-  tx('Text16', ins.r1dni);
-
-  // Text25=Ocupación R1(y=536,x=117)
-  tx('Text25', ins.r1ocupacion);
-
-  // Asistió educativo R1, nivel, completó
-  sino('SI_2', 'NO_2', ins.r1asistioEduc);
-  const r1niv = t(ins.r1nivelEduc);
-  cb('Primario',               r1niv === 'Primario');
-  cb('Secundario',             r1niv === 'Secundario');
-  cb('Superior',               r1niv === 'Superior');
-  cb('Superior Universitario', r1niv === 'Superior Universitario');
-  cb('Posgrado',               r1niv === 'Posgrado');
-  sino('SI_2', 'NO_2', ins.r1completoNivel);
-
+  // Responsable 1
+  const v1=t(ins.r1vinculo);
+  cb('Madre',v1==='Madre'); cb('Padre',v1==='Padre');
+  cb('Tutor',v1==='Tutor'); cb('Tutora',v1==='Tutora'); cb('Otro_2',v1==='Otro');
+  tx('Text3', ins.r1apellido);   // y=434, x=63
+  tx('Text4', ins.r1nombre);     // y=432, x=272
+  tx('Text7', ins.r1nac);        // y=431, x=491 = Nacionalidad R1
+  const r1d=t(ins.r1tieneDni);
+  cb('SI y tiene el DNI físico_2',   r1d==='Sí, tiene DNI físico');
+  cb('SI pero NO tiene el DNI físico', r1d==='Sí, en trámite');
+  cb('NO posee DNI argentino_2',     r1d==='No');
+  tx('Text16', ins.r1dni);       // y=473, x=236
+  tx('Text24', ins.r1dniNro);    // y=513, x=426 = número DNI R1 (si no tiene físico)
+  tx('Text25', ins.r1ocupacion); // y=536, x=117
+  sino('SI_34','NO_34', ins.r1asistioEduc);  // y=540
+  const r1n=t(ins.r1nivelEduc);
+  cb('Primario',               r1n==='Primario');
+  cb('Secundario',             r1n==='Secundario');
+  cb('Superior',               r1n==='Superior');
+  cb('Superior Universitario', r1n==='Superior Universitario');
+  cb('Posgrado',               r1n==='Posgrado');
+  sino('SI_35','NO_35', ins.r1completoNivel); // y=580
   // Actividad R1
-  const r1act = t(ins.r1actividad).toLowerCase();
-  cb('Estudia',                            r1act.includes('estudi'));
-  cb('Trabaja',                            r1act.includes('trabaj'));
-  cb('Busca trabajo',                      r1act.includes('busca'));
-  cb('Realiza tareas de cuidado no pagas', r1act.includes('cuidado'));
-  cb('Recibe jubilación o pensión',        r1act.includes('jubilaci'));
+  const r1a=t(ins.r1actividad).toLowerCase();
+  cb('Estudia',                            r1a.includes('estudi'));
+  cb('Trabaja',                            r1a.includes('trabaj'));
+  cb('Busca trabajo',                      r1a.includes('busca'));
+  cb('Realiza tareas de cuidado no pagas', r1a.includes('cuidado'));
+  cb('Recibe jubilación o pensión',        r1a.includes('jubilaci'));
+  // Convive R1: SI_36/NO_36 (y=662)
+  const r1c=t(ins.r1convive)||'SI';
+  cb('SI_36',r1c==='SI'); cb('NO_36',r1c==='NO');
+  // Domicilio R1
+  tx('Text26',ins.r1calle);    tx('Text29',ins.r1numero);
+  tx('Text35',ins.r1piso);     tx('Text36',ins.r1torre);    tx('Text43',ins.r1depto);
+  tx('Text44',ins.r1localidad);tx('Text45',ins.r1distrito); tx('Text46',ins.r1provincia);
+  tx('Text47',ins.r1entreCalle);tx('Text48',ins.r1yCalle);  tx('Text49',ins.r1otroDato);
+  tx('Text51',ins.r1telFijoCod);tx('Text52',ins.r1telFijo);
+  tx('Text53',ins.r1celularCod);tx('Text54',ins.r1celular);
+  tx('Text50',ins.r1email);
 
-  // Convive R1
-  const r1conv = t(ins.r1convive) || 'SI';
-  cb('SI', r1conv === 'SI');
-  cb('NO_2', r1conv === 'NO');
-
-  // Domicilio R1 — solo si no convive
-  // Text26=Calle(y=678,x=54), Text29=N(y=677,x=306), Text35=Piso(y=676,x=383)
-  // Text36=Torre(y=677,x=466), Text43=Depto(y=677,x=552)
-  // Text44=Localidad(y=697,x=69), Text45=Distrito(y=697,x=239), Text46=Provincia(y=696,x=436)
-  // Text47=EntreCalle(y=718,x=62), Text48=YCalle(y=716,x=242), Text49=OtroDato(y=719,x=437)
-  // Text50=Email(y=760,x=108)
-  // Text51=CodAreaFijo(y=737,x=105), Text52=TelFijo(y=738,x=149)
-  // Text53=CodAreaCel(y=738,x=404), Text54=Celular(y=740,x=445)
-  tx('Text26', ins.r1calle);
-  tx('Text29', ins.r1numero);
-  tx('Text35', ins.r1piso);
-  tx('Text36', ins.r1torre);
-  tx('Text43', ins.r1depto);
-  tx('Text44', ins.r1localidad);
-  tx('Text45', ins.r1distrito);
-  tx('Text46', ins.r1provincia);
-  tx('Text47', ins.r1entreCalle);
-  tx('Text48', ins.r1yCalle);
-  tx('Text49', ins.r1otroDato);
-  tx('Text50', ins.r1email);
-  tx('Text51', ins.r1telFijoCod);
-  tx('Text52', ins.r1telFijo);
-  tx('Text53', ins.r1celularCod);
-  tx('Text54', ins.r1celular);
-
-  // ── PÁGINA 4: RESPONSABLE 2 ──────────────────────────────────
-  // Text55=Apellido(y=57,x=66), Text56=Nombre(y=56,x=275), Text57=Nacionalidad(y=57,x=494)
-  const v2 = t(ins.r2vinculo);
-  cb('Madre_2',  v2==='Madre'); cb('Padre_2',  v2==='Padre');
-  cb('Tutor_2',  v2==='Tutor'); cb('Tutora_2', v2==='Tutora'); cb('Otro_3', v2==='Otro');
-  tx('Text55', ins.r2apellido);
-  tx('Text56', ins.r2nombre);
-  tx('Text57', ins.r2nac);
-
-  // Text58=DNI R2(y=98,x=240)
-  const r2dni = t(ins.r2tieneDni);
-  cb('SI y tiene el DNI físico_3', r2dni === 'Sí, tiene DNI físico');
-  cb('SI pero NO tiene el DNI físico_2', r2dni === 'Sí, en trámite');
-  cb('NO posee DNI argentino_3', r2dni === 'No');
-  tx('Text58', ins.r2dni);
-
-  // Text60=Ocupación R2(y=158,x=117)
-  tx('Text60', ins.r2ocupacion);
-  sino('SI_2', 'NO_2', ins.r2asistioEduc);
-  const r2niv = t(ins.r2nivelEduc);
-  cb('Primario_2',               r2niv === 'Primario');
-  cb('Secundario_2',             r2niv === 'Secundario');
-  cb('Superior_2',               r2niv === 'Superior');
-  cb('Superior Universitario_2', r2niv === 'Superior Universitario');
-  cb('Posgrado_2',               r2niv === 'Posgrado');
-  sino('SI_2', 'NO_2', ins.r2completoNivel);
-
+  // ══ PÁGINA 4: RESPONSABLE 2 ════════════════════════════════
+  const v2=t(ins.r2vinculo);
+  cb('Madre_2',v2==='Madre'); cb('Padre_2',v2==='Padre');
+  cb('Tutor_2',v2==='Tutor'); cb('Tutora_2',v2==='Tutora'); cb('Otro_3',v2==='Otro');
+  tx('Text55',ins.r2apellido);  // y=57, x=66
+  tx('Text56',ins.r2nombre);    // y=56, x=275
+  tx('Text57',ins.r2nac);       // y=57, x=494 = Nacionalidad R2
+  const r2d=t(ins.r2tieneDni);
+  cb('SI y tiene el DNI físico_3',   r2d==='Sí, tiene DNI físico');
+  cb('SI pero NO tiene el DNI físico_2', r2d==='Sí, en trámite');
+  cb('NO posee DNI argentino_3',     r2d==='No');
+  tx('Text58',ins.r2dni);       // y=98, x=240
+  tx('Text59',ins.r2dniNro);    // y=38, x=449
+  tx('Text60',ins.r2ocupacion); // y=158, x=117
+  tx('Text61',ins.r2dniCpi);    // y=138, x=427
+  tx('Text62',ins.r2docExt);    // y=139, x=472
+  sino('SI_38','NO_39', ins.r2asistioEduc); // y=165
+  const r2n=t(ins.r2nivelEduc);
+  cb('Primario_2',               r2n==='Primario');
+  cb('Secundario_2',             r2n==='Secundario');
+  cb('Superior_2',               r2n==='Superior');
+  cb('Superior Universitario_2', r2n==='Superior Universitario');
+  cb('Posgrado_2',               r2n==='Posgrado');
+  sino('SI_39','NO_40', ins.r2completoNivel); // y=205
   // Actividad R2
-  const r2act = t(ins.r2actividad).toLowerCase();
-  cb('Estudia_2',                            r2act.includes('estudi'));
-  cb('Trabaja_2',                            r2act.includes('trabaj'));
-  cb('Busca trabajo_2',                      r2act.includes('busca'));
-  cb('Realiza tareas de cuidado no pagas_2', r2act.includes('cuidado'));
-  cb('Recibe jubilación o pensión_2',        r2act.includes('jubilaci'));
-
-  // Convive R2 — Text61/Text62 son otros campos; convive es checkbox
-  cb('SI_2', t(ins.r2convive||'SI') === 'SI');
-  cb('NO_2', t(ins.r2convive||'SI') === 'NO');
-
+  const r2a=t(ins.r2actividad).toLowerCase();
+  cb('Estudia_2',                            r2a.includes('estudi'));
+  cb('Trabaja_2',                            r2a.includes('trabaj'));
+  cb('Busca trabajo_2',                      r2a.includes('busca'));
+  cb('Realiza tareas de cuidado no pagas_2', r2a.includes('cuidado'));
+  cb('Recibe jubilación o pensión_2',        r2a.includes('jubilaci'));
+  // Convive R2: SI_40/NO_41 (y=287)
+  const r2c=t(ins.r2convive)||'SI';
+  cb('SI_40',r2c==='SI'); cb('NO_41',r2c==='NO');
   // Domicilio R2
-  // Text63=Calle(y=303,x=52), Text64=N(y=302,x=308), Text65=Piso(y=301,x=388)
-  // Text66=Torre(y=302,x=467), Text67=Depto(y=301,x=553)
-  // Text68=EntreCalle(y=323,x=65), Text69=YCalle(y=323,x=241), Text70=OtroDato(y=324,x=442)
-  // Text71.0=Provincia(y=344,x=64), Text71.1=Distrito(y=344,x=248), Text72=Localidad(y=344,x=442)
-  // Text73=CodAreaFijo(y=363,x=107), Text74=TelFijo(y=365,x=149)
-  // Text75=CodAreaCel(y=362,x=407), Text76=Celular(y=362,x=454)
-  // Text77=Email(y=385,x=108)
-  tx('Text63', ins.r2calle);
-  tx('Text64', ins.r2numero);
-  tx('Text65', ins.r2piso);
-  tx('Text66', ins.r2torre);
-  tx('Text67', ins.r2depto);
-  tx('Text68', ins.r2entreCalle);
-  tx('Text69', ins.r2yCalle);
-  tx('Text70', ins.r2otroDato);
-  tx('Text71.0', ins.r2provincia);
-  tx('Text71.1', ins.r2distrito);
-  tx('Text72', ins.r2localidad);
-  tx('Text73', ins.r2telFijoCod);
-  tx('Text74', ins.r2telFijo);
-  tx('Text75', ins.r2celularCod);
-  tx('Text76', ins.r2celular);
-  tx('Text77', ins.r2email);
+  tx('Text63',ins.r2calle);    tx('Text64',ins.r2numero);
+  tx('Text65',ins.r2piso);     tx('Text66',ins.r2torre);    tx('Text67',ins.r2depto);
+  tx('Text68',ins.r2entreCalle);tx('Text69',ins.r2yCalle);  tx('Text70',ins.r2otroDato);
+  tx('Text71.0',ins.r2provincia);tx('Text71.1',ins.r2distrito);tx('Text72',ins.r2localidad);
+  tx('Text73',ins.r2telFijoCod);tx('Text74',ins.r2telFijo);
+  tx('Text75',ins.r2celularCod);tx('Text76',ins.r2celular);
+  tx('Text77',ins.r2email);
 
   // Restricciones judiciales
-  // Text78=Apellido(y=424), Text79=Nombre(y=425), Text80=TipoDoc(y=445)
-  // Text81=NroDoc(y=446), Text82=Descripcion(y=448)
-  tx('Text78', ins.restApellido);
-  tx('Text79', ins.restNombre);
-  tx('Text80', ins.restTipoDoc);
-  tx('Text81', ins.restNroDoc);
-  tx('Text82', ins.restDescripcion);
+  tx('Text78',ins.restApellido); tx('Text79',ins.restNombre);
+  tx('Text80',ins.restTipoDoc);  tx('Text81',ins.restNroDoc);
+  tx('Text82',ins.restDescripcion);
+
+  // A completar por el establecimiento
+  tx('Text83',ins.nroLegajo); tx('Text84',ins.nroMatriz); tx('Text85',ins.nroFolio);
 
   return fv;
 }
