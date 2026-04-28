@@ -67,9 +67,10 @@ header{background:var(--az);color:#fff;position:sticky;top:0;z-index:100;box-sha
 .domr{background:var(--cel);border:1px solid var(--azc);border-radius:8px;padding:16px;margin-top:12px;display:none;}
 .domr .sub{color:var(--az);}
 /* Fila con cod área */
-.tel-row{display:flex;gap:8px;}
-.tel-row .cod{width:80px;flex-shrink:0;}
-.tel-row input{font-size:.8rem!important;}
+.tel-row{display:flex;gap:6px;}
+.tel-row .cod{width:75px;flex-shrink:0;}
+.tel-row input{font-size:.74rem!important;}
+.tel-row select{font-size:.74rem!important;}
 /* Botón enviar */
 .benv{width:100%;padding:15px;background:var(--az);color:#fff;border:none;border-radius:10px;font-family:'DM Serif Display',serif;font-size:1.05rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:26px;}
 .benv:hover{background:var(--azc);transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,58,107,.3);}
@@ -150,6 +151,14 @@ header{background:var(--az);color:#fff;position:sticky;top:0;z-index:100;box-sha
         <option value="Buenos Aires">Buenos Aires</option>
         <option value="Otra">Otra (especificar)</option>
       </select>
+    </div>
+    <div class="c" id="grpDistritoNac" style="display:none">
+      <label>Distrito (si nació en Buenos Aires)</label>
+      <input type="text" id="distritoNac" placeholder="Ej: La Matanza">
+    </div>
+    <div class="c" id="grpLocalidadNac" style="display:none">
+      <label>Localidad (si nació en Buenos Aires)</label>
+      <input type="text" id="localidadNac" placeholder="Ej: Isidro Casanova">
     </div>
 
     <div class="c full">
@@ -1137,13 +1146,18 @@ function actualizarDistritoLocalidad() {
 document.getElementById('provincia').addEventListener('change', actualizarDistritoLocalidad);
 actualizarDistritoLocalidad(); // ejecutar al cargar
 
-// Auto-formato CUIL: mientras escribe, agrega guiones automáticamente
-document.getElementById('cuil').addEventListener('input', function() {
-  let v = this.value.replace(/\D/g,'').slice(0,11);
-  if (v.length > 10) v = v.slice(0,2)+'-'+v.slice(2,10)+'-'+v.slice(10);
-  else if (v.length > 2) v = v.slice(0,2)+'-'+v.slice(2);
-  this.value = v;
-});
+// Mostrar distrito/localidad de nacimiento solo si nació en Buenos Aires
+function actualizarNacBsAs() {
+  const esBsAs = document.getElementById('provinciaNac').value === 'Buenos Aires';
+  document.getElementById('grpDistritoNac').style.display = esBsAs ? '' : 'none';
+  document.getElementById('grpLocalidadNac').style.display = esBsAs ? '' : 'none';
+  if (!esBsAs) {
+    document.getElementById('distritoNac').value = '';
+    document.getElementById('localidadNac').value = '';
+  }
+}
+document.getElementById('provinciaNac').addEventListener('change', actualizarNacBsAs);
+actualizarNacBsAs();
 
 // ── PROGRESO ──────────────────────────────────────────
 const REQS = ['apellido','nombre','fechaNac','genero','tieneDni','calle','localidad','ciclo','anio','turno','condicion','r1vinculo','r1apellido','r1nombre','r1celular'];
@@ -1186,7 +1200,7 @@ document.getElementById('f').addEventListener('submit', async e => {
       apellido: v('apellido').toUpperCase(), nombre: v('nombre'),
       fechaNac: v('fechaNac'), genero: v('genero'),
       lugarNac: v('lugarNac'), nacionalidad: v('nacionalidad'),
-      provinciaNac: v('provinciaNac'),
+      provinciaNac: v('provinciaNac'), distritoNac: v('distritoNac'), localidadNac: v('localidadNac'),
       tieneDni: v('tieneDni'), numeroDni: v('numeroDni'), cuil: v('cuil'),
       tieneCpi: v('tieneCpi'),
       tieneDocExt: v('tieneDocExt'), tipoDocExt: v('tipoDocExt'), nroDocExt: v('nroDocExt'),
