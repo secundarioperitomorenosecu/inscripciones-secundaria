@@ -515,16 +515,8 @@ function buildFieldValues(ins) {
   tx('Text2', ins.nombre);
   tx('Fecha4_af_date', ins.fechaNac);
   tx('Text5', ins.numeroDni);
-  // CUIL: puede venir "20-21548434-4" o "20215484344" → 3 campos separados
-  const cuilRaw = t(ins.cuil).replace(/\s/g,'');
-  let cp;
-  if (cuilRaw.includes('-')) {
-    cp = cuilRaw.split('-');
-  } else if (cuilRaw.length === 11) {
-    cp = [cuilRaw.slice(0,2), cuilRaw.slice(2,10), cuilRaw.slice(10)];
-  } else {
-    cp = [cuilRaw, '', ''];
-  }
+  // CUIL: "20-21548434-4" → 3 campos separados
+  const cp = t(ins.cuil).split('-');
   tx('Text6', cp[0]||''); tx('Text8', cp[1]||''); tx('Text9', cp[2]||'');
   tx('Text11', ins.nacionalidad);
   tx('Text10', ins.provinciaNac); // "Otra" provincia de nacimiento
@@ -549,7 +541,11 @@ function buildFieldValues(ins) {
   // Lugar de nacimiento
   cb('En Argentina',    t(ins.lugarNac)==='Argentina');
   cb('En el extranjero',t(ins.lugarNac)==='Extranjero');
-  cb('Buenos Aires',    true);
+  // Provincia de nacimiento
+  cb('Buenos Aires',    t(ins.provinciaNac)==='Buenos Aires');
+  // Distrito y localidad de nacimiento (solo si nació en Buenos Aires)
+  tx('Text30', ins.distritoNac||'');
+  tx('Text31', ins.localidadNac||'');
 
   // Domicilio estudiante
   tx('Text12', ins.calle);   tx('Text13', ins.numero);
@@ -644,9 +640,9 @@ function buildFieldValues(ins) {
     ['Medicamentos',                              'Check Box14','Check Box17','Check Box25.0','Check Box26.0'],
     ['Vacunas',                                   'Check Box15','Check Box18','Check Box25.1','Check Box26.1'],
     ['Alimentos',                                 'Check Box16','Check Box19','Check Box25.2','Check Box26.2'],
-    ['Picaduras de Insectos',                     'Check Box6.0.0','Check Box6.0.1','Check Box29.0.0','Check Box29.0.1'],
-    ['Estacionales (Polen, ácaros, polvo, etc.)','Check Box6.1.0','Check Box6.1.1','Check Box29.1.0','Check Box29.1.1'],
-    ['Otras',                                     'Check Box7.0',  'Check Box7.1',  'Check Box29.2.0','Check Box29.2.1'],
+    ['Picaduras de Insectos',                     'Check Box20.0','Check Box22.0','Check Box29.0.0','Check Box29.0.1'],
+    ['Estacionales (Polen, ácaros, polvo, etc.)','Check Box20.1','Check Box22.1','Check Box29.1.0','Check Box29.1.1'],
+    ['Otras',                                     'Check Box20.2','Check Box22.2','Check Box29.2.0','Check Box29.2.1'],
   ].forEach(([k,si,no,siI,noI]) => {
     const a=al[k]||{};
     cb(si,  a.padece==='SI'); cb(no,  a.padece==='NO');
@@ -677,11 +673,11 @@ function buildFieldValues(ins) {
   ].forEach(([k,si,no]) => { cb(si,af[k]==='SI'); cb(no,af[k]==='NO'); });
 
   // Establecimiento procedencia
-  tx('Text37', ins.procDistrito);
-  tx('Text38', ins.procProvincia && ins.procProvincia !== 'Buenos Aires' ? ins.procEscuela : ''); // "Otra especificar"
+  tx('Text37', '');                // "Otra especificar" de provincia — vacío si es Buenos Aires
+  tx('Text38', ins.procDistrito);  // Distrito de procedencia
   tx('Text39', ins.procNivel);
   tx('Text40', ins.procEscuela);   // Nombre escuela
-  tx('Text41', ins.procEscuelaNro||'');
+  tx('Text41', ins.procEscuelaNro||''); // N° escuela
   cb('Buenos Aires_2', t(ins.procProvincia)==='Buenos Aires');
   cb('Estatal_2',  t(ins.procSector)==='Estatal');
   cb('Privado_2',  t(ins.procSector)==='Privado');
@@ -849,8 +845,16 @@ window.generarPDF = async (id) => {
           const fontSize = len <= 20 ? 9 : len <= 35 ? 7 : 6;
           field.setFontSize(fontSize);
         } else if (fv.type === 'check') {
-          const field = form.getCheckBox(fv.name);
-          fv.value ? field.check() : field.uncheck();
+          try {
+            const field = form.getCheckBox(fv.name);
+            fv.value ? field.check() : field.uncheck();
+          } catch(e2) {
+            // Algunos checkboxes son en realidad RadioGroups en pdf-lib
+            try {
+              const rg = form.getRadioGroup(fv.name);
+              if (fv.value) rg.select('Yes');
+            } catch(e3) { /* ignorar */ }
+          }
         } else if (fv.type === 'radio') {
           const field = form.getRadioGroup(fv.name);
           try { field.select(fv.value); } catch(e) { /* opción no disponible */ }
