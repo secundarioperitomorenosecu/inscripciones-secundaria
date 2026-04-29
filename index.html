@@ -665,22 +665,25 @@ function buildFieldValues(ins) {
   tx('Text42', ins.motivoOperacion);
   tx('Text43', ins.anioOperacion);
 
-  // Antecedentes familiares — col izq SI/NO, col der Tos/Celiaquía usan Check Box35/36
+  // Antecedentes familiares col izq (Muerte súbita, Diabetes, Problemas cardíacos) → Check Box29
+  // col der (Tos crónica, Celiaquía) → Check Box35, Check Box36
   const af = ins.antecFamiliar || {};
-  [
-    ['Muerte súbita de un familiar directo menor de 50 años','SI_22','NO_22'],
-    ['Diabetes',                                             'SI_23','NO_23'],
-    ['Problemas cardíacos',                                  'SI_24','NO_24'],
-  ].forEach(([k,si,no]) => { cb(si,af[k]==='SI'); cb(no,af[k]==='NO'); });
-  // Tos crónica — Check Box29.0.0/1 (SI/NO) — ver coordenadas
-  cb('Check Box29.0.0', af['Tos crónica']==='SI'); cb('Check Box29.0.1', af['Tos crónica']==='NO');
-  // Celiaquía — Check Box29.1.0/1
-  cb('Check Box29.1.0', af['Celiaquía']==='SI');   cb('Check Box29.1.1', af['Celiaquía']==='NO');
+  cb('Check Box29.0.0', af['Muerte súbita de un familiar directo menor de 50 años']==='SI');
+  cb('Check Box29.0.1', af['Muerte súbita de un familiar directo menor de 50 años']==='NO');
+  cb('Check Box29.1.0', af['Diabetes']==='SI');
+  cb('Check Box29.1.1', af['Diabetes']==='NO');
+  cb('Check Box29.2.0', af['Problemas cardíacos']==='SI');
+  cb('Check Box29.2.1', af['Problemas cardíacos']==='NO');
+  cb('Check Box35.0',   af['Tos crónica']==='SI');
+  cb('Check Box35.1',   af['Tos crónica']==='NO');
+  cb('Check Box36.0',   af['Celiaquía']==='SI');
+  cb('Check Box36.1',   af['Celiaquía']==='NO');
 
   // Establecimiento procedencia
-  tx('Text37', ins.procDistrito); tx('Text38', ins.procEscuela);
+  // Text37=Otra(especif), Text38=Distrito, Text39=Nivel, Text40=NombreEscuela, Text41=Nro
+  tx('Text38', ins.procDistrito); tx('Text40', ins.procEscuela);
   tx('Text39', ins.procNivel);
-  tx('Text40', ins.procEscuela); tx('Text41', ins.procEscuelaNro||'');
+  tx('Text41', ins.procEscuelaNro||'');
   cb('Buenos Aires_2', t(ins.procProvincia)==='Buenos Aires');
   cb('Estatal_2',  t(ins.procSector)==='Estatal');
   cb('Privado_2',  t(ins.procSector)==='Privado');
@@ -889,13 +892,13 @@ window.generarPDF = async (id) => {
       'Check Box23.0':{p:1,cx:460.3,cy:629.3}, 'Check Box24.0':{p:1,cx:480.6,cy:629.6},
       'Check Box23.1':{p:1,cx:460.3,cy:613.6}, 'Check Box24.1':{p:1,cx:480.6,cy:612.8},
       'Check Box23.2':{p:1,cx:460.3,cy:597.9}, 'Check Box24.2':{p:1,cx:480.6,cy:597.1},
-      // Página 2 — Antecedentes familiares col der
-      'Check Box29.0.0':{p:1,cx:313.4,cy:422.4}, 'Check Box29.0.1':{p:1,cx:332.9,cy:422.4},
-      'Check Box29.1.0':{p:1,cx:313.4,cy:406.7}, 'Check Box29.1.1':{p:1,cx:332.9,cy:406.7},
-      'Check Box29.2.0':{p:1,cx:313.4,cy:390.9}, 'Check Box29.2.1':{p:1,cx:332.9,cy:390.9},
       // Página 2 — Antecedentes familiares col der (Tos/Celiaquía)
       'Check Box35.0':{p:1,cx:552.5,cy:419.4}, 'Check Box35.1':{p:1,cx:572.0,cy:419.4},
       'Check Box36.0':{p:1,cx:552.5,cy:402.9}, 'Check Box36.1':{p:1,cx:572.0,cy:402.9},
+      // Página 2 — Antecedentes familiares col izq (Check Box29)
+      'Check Box29.0.0':{p:1,cx:313.4,cy:422.4}, 'Check Box29.0.1':{p:1,cx:332.9,cy:422.4},
+      'Check Box29.1.0':{p:1,cx:313.4,cy:406.7}, 'Check Box29.1.1':{p:1,cx:332.9,cy:406.7},
+      'Check Box29.2.0':{p:1,cx:313.4,cy:390.9}, 'Check Box29.2.1':{p:1,cx:332.9,cy:390.9},
     };
 
     // Primero aplicar todos los campos de texto, radios y checkboxes SI/NO normales
@@ -906,7 +909,7 @@ window.generarPDF = async (id) => {
           const field = form.getTextField(fv.name);
           field.setText(fv.value);
           const len = (fv.value || '').length;
-          const fontSize = len <= 20 ? 9 : len <= 35 ? 7 : 6;
+          const fontSize = len <= 15 ? 9 : len <= 25 ? 7 : len <= 35 ? 6 : 5;
           field.setFontSize(fontSize);
         } else if (fv.type === 'radio') {
           const field = form.getRadioGroup(fv.name);
