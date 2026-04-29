@@ -232,7 +232,7 @@ header{background:var(--az);color:#fff;position:sticky;top:0;z-index:100;box-sha
     <div class="c">
       <label>Provincia</label>
       <select id="provincia">
-        <option value="Buenos Aires">Buenos Aires</option>
+        <option value="Buenos Aires" selected>Buenos Aires</option>
         <option value="Otra">Otra provincia</option>
       </select>
     </div>
@@ -242,7 +242,7 @@ header{background:var(--az);color:#fff;position:sticky;top:0;z-index:100;box-sha
     </div>
     <div class="c" id="grpLocalidad">
       <label>Localidad <span class="r">*</span></label>
-      <input type="text" id="localidad" required placeholder="Ej: Ramos Mejía">
+      <input type="text" id="localidad" placeholder="Ej: Ramos Mejía">
     </div>
   </div>
   <hr class="sep">
@@ -1134,7 +1134,9 @@ function actualizarDistritoLocalidad() {
   }
 }
 document.getElementById('provincia').addEventListener('change', actualizarDistritoLocalidad);
-actualizarDistritoLocalidad(); // ejecutar al cargar
+// Ejecutar al cargar con pequeño delay para asegurar que el DOM y el select estén listos
+actualizarDistritoLocalidad();
+setTimeout(actualizarDistritoLocalidad, 100);
 
 // ── PROGRESO ──────────────────────────────────────────
 const REQS = ['apellido','nombre','fechaNac','genero','tieneDni','calle','localidad','ciclo','anio','turno','condicion','r1vinculo','r1apellido','r1nombre','r1celular'];
