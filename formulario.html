@@ -400,14 +400,14 @@ header{background:var(--az);color:#fff;position:sticky;top:0;z-index:100;box-sha
       <span>Internación en sala común</span>
       <div class="sm">
         <label><input type="radio" name="internComun" value="SI"> SI</label>
-        <label><input type="radio" name="internComun" value="NO"> NO</label>
+        <label><input type="radio" name="internComun" value="NO" checked> NO</label>
       </div>
     </div>
     <div class="ti">
       <span>Internación en cuidados intermedios/intensivos</span>
       <div class="sm">
         <label><input type="radio" name="internIntensivos" value="SI"> SI</label>
-        <label><input type="radio" name="internIntensivos" value="NO"> NO</label>
+        <label><input type="radio" name="internIntensivos" value="NO" checked> NO</label>
       </div>
     </div>
   </div>
@@ -1057,7 +1057,7 @@ function buildSiNoGrid(containerId, conds, prefix) {
   document.getElementById(containerId).innerHTML = conds.map((c,i) => `
     <div class="ti"><span>${c}</span><div class="sm">
       <label><input type="radio" name="${prefix}_${i}" value="SI"> SI</label>
-      <label><input type="radio" name="${prefix}_${i}" value="NO"> NO</label>
+      <label><input type="radio" name="${prefix}_${i}" value="NO" checked> NO</label>
     </div></div>`).join('');
 }
 buildSiNoGrid('grSalud',    COND_SALUD,    'sal');
@@ -1072,9 +1072,9 @@ document.getElementById('grAlergias').innerHTML = `
       <span style="font-weight:600">${a}</span>
       <div style="display:flex;gap:12px;font-size:.76rem">
         <span>¿Padece? <label style="margin-left:4px"><input type="radio" name="alg_${i}" value="SI"> SI</label>
-          <label style="margin-left:4px"><input type="radio" name="alg_${i}" value="NO"> NO</label></span>
+          <label style="margin-left:4px"><input type="radio" name="alg_${i}" value="NO" checked> NO</label></span>
         <span>¿Internación? <label style="margin-left:4px"><input type="radio" name="algInt_${i}" value="SI"> SI</label>
-          <label style="margin-left:4px"><input type="radio" name="algInt_${i}" value="NO"> NO</label></span>
+          <label style="margin-left:4px"><input type="radio" name="algInt_${i}" value="NO" checked> NO</label></span>
       </div>
     </div>`).join('')}
   </div>`;
@@ -1147,7 +1147,7 @@ document.querySelectorAll('input,select,textarea').forEach(el => el.addEventList
 // ── HELPERS ───────────────────────────────────────────
 const v   = id => (document.getElementById(id)?.value||'').trim();
 const chk = name => [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(c=>c.value).join(', ');
-const rad = name => document.querySelector(`input[name="${name}"]:checked`)?.value||'';
+const rad = name => document.querySelector(`input[name="${name}"]:checked`)?.value||'NO';
 const grid = (prefix, conds) => Object.fromEntries(conds.map((c,i) => [c, rad(`${prefix}_${i}`)]));
 const algGrid = () => Object.fromEntries(TIPOS_ALERGIA.map((a,i) => [a, { padece: rad(`alg_${i}`), internacion: rad(`algInt_${i}`) }]));
 
