@@ -541,10 +541,7 @@ function buildFieldValues(ins) {
   // Lugar de nacimiento
   cb('En Argentina',    t(ins.lugarNac)==='Argentina');
   cb('En el extranjero',t(ins.lugarNac)==='Extranjero');
-  cb('Buenos Aires',    t(ins.provinciaNac)==='Buenos Aires');
-  // Distrito y localidad de nacimiento (campos dentro de "Solo para Bs As")
-  tx('Text27', ins.distritoNac||'');
-  tx('Text28', ins.localidadNac||'');
+  cb('Buenos Aires',    true);
 
   // Domicilio estudiante
   tx('Text12', ins.calle);   tx('Text13', ins.numero);
@@ -556,19 +553,9 @@ function buildFieldValues(ins) {
   // Solo para quienes marcaron Bs As (y=293): Text88=Distrito, Text89=Localidad
   tx('Text88', ins.distrito);
   tx('Text89', ins.localidad);
-  // fixTel: si el número va vacío pero el cod tiene el número completo (>6 dígitos),
-  // extrae los últimos 8 dígitos como número y los primeros como código de área
-  const fixTel = (cod, num) => {
-    const c = (cod||'').replace(/\D/g,'');
-    const n = (num||'').replace(/\D/g,'');
-    if (n) return [c, n];
-    if (c.length > 6) return [c.slice(0, c.length-8), c.slice(c.length-8)];
-    return [c, ''];
-  };
-  const [tfCod, tfNum] = fixTel(ins.telFijoCod, ins.telFijo);
-  const [tcCod, tcNum] = fixTel(ins.celularCod, ins.celular);
-  tx('Text90', tfCod); tx('Text91', tfNum);
-  tx('Text93', tcCod); tx('Text92', tcNum);
+  // Teléfonos: Text90=CodFijo, Text91=Fijo, Text93=CodCel, Text92=Celular
+  tx('Text90', ins.telFijoCod); tx('Text91', ins.telFijo);
+  tx('Text93', ins.celularCod); tx('Text92', ins.celular);
 
   // Otros datos
   cb('SI_4', t(ins.tieneHermanos)==='SI');
@@ -756,16 +743,14 @@ function buildFieldValues(ins) {
   // Convive R1: SI_36/NO_36 (y=662)
   const r1c=t(ins.r1convive)||'SI';
   cb('SI_36',r1c==='SI'); cb('NO_36',r1c==='NO');
-  // Domicilio R1 — solo se imprime si r1convive=NO
-  tx('Text44',ins.r1calle);      tx('Text45',ins.r1numero);
-  tx('Text46',ins.r1piso);       tx('Text47',ins.r1torre);     tx('Text48',ins.r1depto);
-  tx('Text49',ins.r1entreCalle); tx('Text50',ins.r1yCalle);    tx('Text64',ins.r1otroDato);
-  tx('Text65',ins.r1provincia);  tx('Text66',ins.r1distrito);  tx('Text67',ins.r1localidad);
-  const [r1tfCod,r1tfNum]=fixTel(ins.r1telFijoCod,ins.r1telFijo);
-  const [r1tcCod,r1tcNum]=fixTel(ins.r1celularCod,ins.r1celular);
-  tx('Text51',r1tfCod); tx('Text52',r1tfNum);
-  tx('Text53',r1tcCod); tx('Text54',r1tcNum);
-  tx('Text63',ins.r1email);
+  // Domicilio R1
+  tx('Text26',ins.r1calle);    tx('Text29',ins.r1numero);
+  tx('Text35',ins.r1piso);     tx('Text36',ins.r1torre);    tx('Text43',ins.r1depto);
+  tx('Text44',ins.r1localidad);tx('Text45',ins.r1distrito); tx('Text46',ins.r1provincia);
+  tx('Text47',ins.r1entreCalle);tx('Text48',ins.r1yCalle);  tx('Text49',ins.r1otroDato);
+  tx('Text51',ins.r1telFijoCod);tx('Text52',ins.r1telFijo);
+  tx('Text53',ins.r1celularCod);tx('Text54',ins.r1celular);
+  tx('Text50',ins.r1email);
 
   // ══ PÁGINA 4: RESPONSABLE 2 ════════════════════════════════
   const v2=t(ins.r2vinculo);
@@ -806,10 +791,8 @@ function buildFieldValues(ins) {
   tx('Text65',ins.r2piso);     tx('Text66',ins.r2torre);    tx('Text67',ins.r2depto);
   tx('Text68',ins.r2entreCalle);tx('Text69',ins.r2yCalle);  tx('Text70',ins.r2otroDato);
   tx('Text71.0',ins.r2provincia);tx('Text71.1',ins.r2distrito);tx('Text72',ins.r2localidad);
-  const [r2tfCod,r2tfNum]=fixTel(ins.r2telFijoCod,ins.r2telFijo);
-  const [r2tcCod,r2tcNum]=fixTel(ins.r2celularCod,ins.r2celular);
-  tx('Text73',r2tfCod); tx('Text74',r2tfNum);
-  tx('Text75',r2tcCod); tx('Text76',r2tcNum);
+  tx('Text73',ins.r2telFijoCod);tx('Text74',ins.r2telFijo);
+  tx('Text75',ins.r2celularCod);tx('Text76',ins.r2celular);
   tx('Text77',ins.r2email);
 
   // Restricciones judiciales
@@ -851,48 +834,36 @@ window.generarPDF = async (id) => {
         if (fv.type === 'text') {
           const field = form.getTextField(fv.name);
           field.setText(fv.value);
-          // Ajuste automático de fuente según largo del texto
           const len = (fv.value || '').length;
-          const fontSize = len <= 20 ? 9 : len <= 35 ? 7 : 6;
-          field.setFontSize(fontSize);
+          field.setFontSize(len <= 20 ? 9 : len <= 35 ? 7 : 6);
         } else if (fv.type === 'check') {
-          try {
-            const field = form.getCheckBox(fv.name);
-            if (fv.value) {
-              // Intentar check() directo primero
-              try {
-                field.check();
-              } catch(e1) {
-                // Si falla, obtener el export value del campo y usarlo
-                try {
-                  const onValues = field.acroField.getOnValues();
-                  if (onValues && onValues.length > 0) {
-                    field.acroField.dict.set(
-                      PDFLib.PDFName.of('V'),
-                      PDFLib.PDFName.of(onValues[0].value)
-                    );
-                    field.acroField.dict.set(
-                      PDFLib.PDFName.of('AS'),
-                      PDFLib.PDFName.of(onValues[0].value)
-                    );
-                  }
-                } catch(e2) { /* ignorar */ }
+          // Manipulación directa del diccionario PDF para máxima compatibilidad
+          const field = form.getCheckBox(fv.name);
+          const widgets = field.acroField.getWidgets();
+          if (fv.value) {
+            // Encontrar el export value real del widget
+            let onVal = 'Yes';
+            if (widgets.length > 0) {
+              const ap = widgets[0].dict.get(PDFLib.PDFName.of('AP'));
+              if (ap) {
+                const n = ap.get(PDFLib.PDFName.of('N'));
+                if (n) {
+                  const keys = [...n.keys()].map(k => k.value).filter(k => k !== 'Off');
+                  if (keys.length > 0) onVal = keys[0];
+                }
               }
-            } else {
-              try { field.uncheck(); } catch(e) { /* ignorar */ }
             }
-          } catch(e) {
-            // Puede ser RadioGroup
-            try {
-              const rg = form.getRadioGroup(fv.name);
-              if (fv.value) rg.select('Yes');
-            } catch(e2) { /* ignorar */ }
+            field.acroField.dict.set(PDFLib.PDFName.of('V'), PDFLib.PDFName.of(onVal));
+            widgets.forEach(w => w.dict.set(PDFLib.PDFName.of('AS'), PDFLib.PDFName.of(onVal)));
+          } else {
+            field.acroField.dict.set(PDFLib.PDFName.of('V'), PDFLib.PDFName.of('Off'));
+            widgets.forEach(w => w.dict.set(PDFLib.PDFName.of('AS'), PDFLib.PDFName.of('Off')));
           }
         } else if (fv.type === 'radio') {
           const field = form.getRadioGroup(fv.name);
           try { field.select(fv.value); } catch(e) { /* opción no disponible */ }
         }
-      } catch(e) { /* campo con tipo incorrecto, ignorar */ }
+      } catch(e) { /* campo inexistente o tipo incompatible */ }
     }
 
     // Aplanar para que no sea editable
