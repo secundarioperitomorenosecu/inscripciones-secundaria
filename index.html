@@ -665,15 +665,17 @@ function buildFieldValues(ins) {
   tx('Text42', ins.motivoOperacion);
   tx('Text43', ins.anioOperacion);
 
-  // Antecedentes familiares — Check Box29.x.0/1 no, usar SI_22..26/NO_22..25
+  // Antecedentes familiares — col izq SI/NO, col der Tos/Celiaquía usan Check Box35/36
   const af = ins.antecFamiliar || {};
   [
     ['Muerte súbita de un familiar directo menor de 50 años','SI_22','NO_22'],
     ['Diabetes',                                             'SI_23','NO_23'],
     ['Problemas cardíacos',                                  'SI_24','NO_24'],
-    ['Tos crónica',                                          'SI_25','NO En caso af'],
-    ['Celiaquía',                                            'SI_26','NO_25'],
   ].forEach(([k,si,no]) => { cb(si,af[k]==='SI'); cb(no,af[k]==='NO'); });
+  // Tos crónica — Check Box29.0.0/1 (SI/NO) — ver coordenadas
+  cb('Check Box29.0.0', af['Tos crónica']==='SI'); cb('Check Box29.0.1', af['Tos crónica']==='NO');
+  // Celiaquía — Check Box29.1.0/1
+  cb('Check Box29.1.0', af['Celiaquía']==='SI');   cb('Check Box29.1.1', af['Celiaquía']==='NO');
 
   // Establecimiento procedencia
   tx('Text37', ins.procDistrito); tx('Text38', ins.procEscuela);
@@ -837,48 +839,112 @@ window.generarPDF = async (id) => {
 
     const fvList = buildFieldValues(ins);
 
+    // Coordenadas exactas de cada checkbox (cx, cy en puntos PDF, página base 0)
+    // Obtenidas inspeccionando el PDF plantilla con pypdf
+    const CHECKBOX_COORDS = {
+      // Página 1 — Salud columna izquierda (Check Box1.x.0=SI, Check Box1.x.1=NO)
+      'Check Box1.0.0':{p:0,cx:214.8,cy:132.3}, 'Check Box1.0.1':{p:0,cx:232.0,cy:132.3},
+      'Check Box1.1.0':{p:0,cx:214.8,cy:116.5}, 'Check Box1.1.1':{p:0,cx:232.0,cy:116.5},
+      'Check Box1.2.0':{p:0,cx:214.8,cy:100.8}, 'Check Box1.2.1':{p:0,cx:232.0,cy:100.8},
+      'Check Box1.3.0':{p:0,cx:214.8,cy:85.0},  'Check Box1.3.1':{p:0,cx:232.0,cy:85.0},
+      'Check Box1.4.0':{p:0,cx:214.8,cy:69.3},  'Check Box1.4.1':{p:0,cx:232.0,cy:69.3},
+      'Check Box1.5.0':{p:0,cx:214.8,cy:53.6},  'Check Box1.5.1':{p:0,cx:232.0,cy:53.6},
+      'Check Box1.6.0':{p:0,cx:214.8,cy:37.8},  'Check Box1.6.1':{p:0,cx:232.0,cy:37.8},
+      'Check Box1.7.0':{p:0,cx:214.8,cy:22.1},  'Check Box1.7.1':{p:0,cx:232.0,cy:22.1},
+      // Página 1 — Salud columna derecha (Check Box4.x.0=SI, Check Box4.x.1=NO)
+      'Check Box4.0.0':{p:0,cx:555.9,cy:132.6}, 'Check Box4.0.1':{p:0,cx:576.2,cy:132.6},
+      'Check Box4.1.0':{p:0,cx:555.9,cy:116.2}, 'Check Box4.1.1':{p:0,cx:576.2,cy:116.2},
+      'Check Box4.2.0':{p:0,cx:555.9,cy:99.7},  'Check Box4.2.1':{p:0,cx:576.2,cy:99.7},
+      // Página 1 — Salud columna derecha fila 4 (Quemaduras=Check Box5)
+      'Check Box5.0':{p:0,cx:556.3,cy:84.7},    'Check Box5.1':{p:0,cx:575.8,cy:84.7},
+      // Página 1 — Salud columna derecha filas 5-6 (Check Box6)
+      'Check Box6.0.0':{p:0,cx:557.0,cy:71.2},  'Check Box6.0.1':{p:0,cx:576.5,cy:71.2},
+      'Check Box6.1.0':{p:0,cx:557.4,cy:49.1},  'Check Box6.1.1':{p:0,cx:577.3,cy:49.1},
+      // Página 1 — Salud columna derecha fila 8 (Problemas piel=Check Box7)
+      'Check Box7.0':{p:0,cx:555.9,cy:24.7},    'Check Box7.1':{p:0,cx:576.2,cy:24.7},
+      // Página 2 — Asma/Celiaquía/Cardíacas (Check Box8)
+      'Check Box8.0.0':{p:1,cx:212.2,cy:787.9}, 'Check Box8.0.1':{p:1,cx:231.7,cy:787.9},
+      'Check Box8.1.0':{p:1,cx:212.2,cy:768.4}, 'Check Box8.1.1':{p:1,cx:231.7,cy:768.4},
+      'Check Box8.2.0':{p:1,cx:212.2,cy:748.9}, 'Check Box8.2.1':{p:1,cx:231.7,cy:748.9},
+      // Página 2 — Falta órgano/Oncohematológica/Inmunodeficiencias (Check Box9)
+      'Check Box9.0.0':{p:1,cx:554.0,cy:787.9}, 'Check Box9.0.1':{p:1,cx:573.5,cy:787.9},
+      'Check Box9.1.0':{p:1,cx:554.0,cy:768.4}, 'Check Box9.1.1':{p:1,cx:573.5,cy:768.4},
+      'Check Box9.2.0':{p:1,cx:554.0,cy:748.9}, 'Check Box9.2.1':{p:1,cx:573.5,cy:748.9},
+      // Página 2 — Internaciones
+      'Check Box10':{p:1,cx:261.7,cy:701.2}, 'Check Box12':{p:1,cx:282.7,cy:701.7},
+      'Check Box11':{p:1,cx:262.4,cy:683.4}, 'Check Box13':{p:1,cx:282.7,cy:682.7},
+      // Página 2 — Alergias col izq SI/NO
+      'Check Box14':{p:1,cx:169.4,cy:630.5}, 'Check Box17':{p:1,cx:188.9,cy:631.2},
+      'Check Box15':{p:1,cx:169.4,cy:614.0}, 'Check Box18':{p:1,cx:188.9,cy:614.0},
+      'Check Box16':{p:1,cx:168.7,cy:598.2}, 'Check Box19':{p:1,cx:188.9,cy:599.0},
+      // Página 2 — Alergias internación col izq
+      'Check Box25.0':{p:1,cx:508.3,cy:629.3}, 'Check Box26.0':{p:1,cx:538.3,cy:629.3},
+      'Check Box25.1':{p:1,cx:508.3,cy:613.6}, 'Check Box26.1':{p:1,cx:538.3,cy:613.6},
+      'Check Box25.2':{p:1,cx:508.3,cy:597.9}, 'Check Box26.2':{p:1,cx:538.3,cy:597.9},
+      // Página 2 — Alergias col der SI/NO
+      'Check Box20.0':{p:1,cx:215.9,cy:629.3}, 'Check Box22.0':{p:1,cx:248.2,cy:629.8},
+      'Check Box20.1':{p:1,cx:215.9,cy:613.6}, 'Check Box22.1':{p:1,cx:248.2,cy:613.1},
+      'Check Box20.2':{p:1,cx:215.9,cy:597.9}, 'Check Box22.2':{p:1,cx:248.2,cy:597.4},
+      // Página 2 — Alergias internación col der
+      'Check Box23.0':{p:1,cx:460.3,cy:629.3}, 'Check Box24.0':{p:1,cx:480.6,cy:629.6},
+      'Check Box23.1':{p:1,cx:460.3,cy:613.6}, 'Check Box24.1':{p:1,cx:480.6,cy:612.8},
+      'Check Box23.2':{p:1,cx:460.3,cy:597.9}, 'Check Box24.2':{p:1,cx:480.6,cy:597.1},
+      // Página 2 — Antecedentes familiares col der
+      'Check Box29.0.0':{p:1,cx:313.4,cy:422.4}, 'Check Box29.0.1':{p:1,cx:332.9,cy:422.4},
+      'Check Box29.1.0':{p:1,cx:313.4,cy:406.7}, 'Check Box29.1.1':{p:1,cx:332.9,cy:406.7},
+      'Check Box29.2.0':{p:1,cx:313.4,cy:390.9}, 'Check Box29.2.1':{p:1,cx:332.9,cy:390.9},
+      // Página 2 — Antecedentes familiares col der (Tos/Celiaquía)
+      'Check Box35.0':{p:1,cx:552.5,cy:419.4}, 'Check Box35.1':{p:1,cx:572.0,cy:419.4},
+      'Check Box36.0':{p:1,cx:552.5,cy:402.9}, 'Check Box36.1':{p:1,cx:572.0,cy:402.9},
+    };
+
+    // Primero aplicar todos los campos de texto, radios y checkboxes SI/NO normales
     for (const fv of fvList) {
       if (!camposDisponibles.has(fv.name)) continue;
       try {
         if (fv.type === 'text') {
           const field = form.getTextField(fv.name);
           field.setText(fv.value);
-          // Ajuste automático de fuente según largo del texto
           const len = (fv.value || '').length;
           const fontSize = len <= 20 ? 9 : len <= 35 ? 7 : 6;
           field.setFontSize(fontSize);
-        } else if (fv.type === 'check') {
-          try {
-            const field = form.getCheckBox(fv.name);
-            const widgets = field.acroField.getWidgets();
-            if (fv.value) {
-              let onVal = 'Yes';
-              if (widgets.length > 0) {
-                const ap = widgets[0].dict.get(PDFLib.PDFName.of('AP'));
-                if (ap) {
-                  const n = ap.get(PDFLib.PDFName.of('N'));
-                  if (n) {
-                    const keys = [...n.keys()].map(k => k.value).filter(k => k !== 'Off');
-                    if (keys.length > 0) onVal = keys[0];
-                  }
-                }
-              }
-              field.acroField.dict.set(PDFLib.PDFName.of('V'), PDFLib.PDFName.of(onVal));
-              widgets.forEach(w => w.dict.set(PDFLib.PDFName.of('AS'), PDFLib.PDFName.of(onVal)));
-            } else {
-              field.acroField.dict.set(PDFLib.PDFName.of('V'), PDFLib.PDFName.of('Off'));
-              widgets.forEach(w => w.dict.set(PDFLib.PDFName.of('AS'), PDFLib.PDFName.of('Off')));
-            }
-          } catch(e) { /* campo inexistente o incompatible */ }
         } else if (fv.type === 'radio') {
           const field = form.getRadioGroup(fv.name);
-          try { field.select(fv.value); } catch(e) { /* opción no disponible */ }
+          try { field.select(fv.value); } catch(e) {}
+        } else if (fv.type === 'check' && !fv.name.startsWith('Check Box')) {
+          // Checkboxes SI/NO normales: usar pdf-lib check/uncheck
+          try {
+            const field = form.getCheckBox(fv.name);
+            if (fv.value) field.check(); else field.uncheck();
+          } catch(e) {}
         }
-      } catch(e) { /* campo inexistente o tipo incompatible */ }
+      } catch(e) {}
     }
 
-    // Aplanar para que no sea editable
+    // Aplanar para que no sea editable (aplana textos y radios)
     form.flatten();
+
+    // Ahora dibujar ✓ directamente sobre el PDF plano para cada checkbox marcado
+    const pages = pdfDoc.getPages();
+    const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+
+    for (const fv of fvList) {
+      if (fv.type !== 'check' || !fv.value) continue;
+      const coord = CHECKBOX_COORDS[fv.name];
+      if (coord) {
+        // Dibujar ✓ centrado en el checkbox
+        pages[coord.p].drawText('X', {
+          x: coord.cx - 3.5,
+          y: coord.cy - 3.5,
+          size: 7,
+          font,
+          color: PDFLib.rgb(0, 0, 0),
+        });
+      } else {
+        // Para campos SI/NO normales (no Check Box), intentar marcar vía acroField antes del flatten
+        // Ya fue procesado arriba — estos quedaron sin coordenadas mapeadas
+      }
+    }
 
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
