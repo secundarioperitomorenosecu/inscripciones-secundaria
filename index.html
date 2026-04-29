@@ -515,8 +515,14 @@ function buildFieldValues(ins) {
   tx('Text2', ins.nombre);
   tx('Fecha4_af_date', ins.fechaNac);
   tx('Text5', ins.numeroDni);
-  // CUIL: "20-21548434-4" → 3 campos separados
-  const cp = t(ins.cuil).split('-');
+  // CUIL: puede venir con o sin guiones "20-21548434-4" o "20215484344"
+  const cuilRaw = t(ins.cuil);
+  let cp;
+  if (cuilRaw.includes('-')) {
+    cp = cuilRaw.split('-');
+  } else {
+    cp = [cuilRaw.slice(0,2), cuilRaw.slice(2,-1), cuilRaw.slice(-1)];
+  }
   tx('Text6', cp[0]||''); tx('Text8', cp[1]||''); tx('Text9', cp[2]||'');
   tx('Text11', ins.nacionalidad);
   tx('Text10', ins.provinciaNac); // "Otra" provincia de nacimiento
@@ -541,7 +547,7 @@ function buildFieldValues(ins) {
   // Lugar de nacimiento
   cb('En Argentina',    t(ins.lugarNac)==='Argentina');
   cb('En el extranjero',t(ins.lugarNac)==='Extranjero');
-  cb('Buenos Aires',    true);
+  cb('Buenos Aires',    t(ins.provinciaNac)==='Buenos Aires');
 
   // Domicilio estudiante
   tx('Text12', ins.calle);   tx('Text13', ins.numero);
@@ -550,9 +556,9 @@ function buildFieldValues(ins) {
   tx('Text21', ins.provincia||'Buenos Aires');
   tx('Text22', ins.distrito);   // Distrito (x=238)
   tx('Text23', ins.localidad);  // Localidad (x=431)
-  // Solo para quienes marcaron Bs As (y=293): Text88=Distrito, Text89=Localidad
-  tx('Text88', ins.distrito);
-  tx('Text89', ins.localidad);
+  // Solo para quienes marcaron Bs As — nacimiento: Text88=Distrito, Text89=Localidad
+  tx('Text88', ins.distritoNac || ins.distrito);
+  tx('Text89', ins.localidadNac || ins.localidad);
   // Teléfonos: Text90=CodFijo, Text91=Fijo, Text93=CodCel, Text92=Celular
   tx('Text90', ins.telFijoCod); tx('Text91', ins.telFijo);
   tx('Text93', ins.celularCod); tx('Text92', ins.celular);
@@ -633,12 +639,12 @@ function buildFieldValues(ins) {
   // Tipos de alergia: Check Box14..19 (col SI/NO), Check Box25.x/26.x (internación)
   const al = ins.alergias || {};
   [
-    ['Medicamentos',                              'Check Box14','Check Box17','Check Box25.0','Check Box26.0'],
-    ['Vacunas',                                   'Check Box15','Check Box18','Check Box25.1','Check Box26.1'],
-    ['Alimentos',                                 'Check Box16','Check Box19','Check Box25.2','Check Box26.2'],
-    ['Picaduras de Insectos',                     'Check Box20.0','Check Box22.0','Check Box29.0.0','Check Box29.0.1'],
-    ['Estacionales (Polen, ácaros, polvo, etc.)','Check Box20.1','Check Box22.1','Check Box29.1.0','Check Box29.1.1'],
-    ['Otras',                                     'Check Box20.2','Check Box22.2','Check Box29.2.0','Check Box29.2.1'],
+    ['Medicamentos',                              'Check Box14',   'Check Box17',   'Check Box25.0','Check Box26.0'],
+    ['Vacunas',                                   'Check Box15',   'Check Box18',   'Check Box25.1','Check Box26.1'],
+    ['Alimentos',                                 'Check Box16',   'Check Box19',   'Check Box25.2','Check Box26.2'],
+    ['Picaduras de Insectos',                     'Check Box27.0', 'Check Box28.0', 'Check Box29.0.0','Check Box29.0.1'],
+    ['Estacionales (Polen, ácaros, polvo, etc.)','Check Box27.1', 'Check Box28.1', 'Check Box29.1.0','Check Box29.1.1'],
+    ['Otras',                                     'Check Box27.2', 'Check Box28.2', 'Check Box29.2.0','Check Box29.2.1'],
   ].forEach(([k,si,no,siI,noI]) => {
     const a=al[k]||{};
     cb(si,  a.padece==='SI'); cb(no,  a.padece==='NO');
@@ -657,6 +663,7 @@ function buildFieldValues(ins) {
   // SI_21/NO_21 = operación (y=262, x=147/173)
   sino('SI_21','NO_21', ins.operacion);
   tx('Text42', ins.motivoOperacion);
+  tx('Text43', ins.anioOperacion);
 
   // Antecedentes familiares — Check Box29.x.0/1 no, usar SI_22..26/NO_22..25
   const af = ins.antecFamiliar || {};
@@ -671,7 +678,7 @@ function buildFieldValues(ins) {
   // Establecimiento procedencia
   tx('Text37', ins.procDistrito); tx('Text38', ins.procEscuela);
   tx('Text39', ins.procNivel);
-  tx('Text40', ins.procEscuelaNombre); tx('Text41', ins.procEscuelaNro);
+  tx('Text40', ins.procEscuela); tx('Text41', ins.procEscuelaNro||'');
   cb('Buenos Aires_2', t(ins.procProvincia)==='Buenos Aires');
   cb('Estatal_2',  t(ins.procSector)==='Estatal');
   cb('Privado_2',  t(ins.procSector)==='Privado');
@@ -743,14 +750,16 @@ function buildFieldValues(ins) {
   // Convive R1: SI_36/NO_36 (y=662)
   const r1c=t(ins.r1convive)||'SI';
   cb('SI_36',r1c==='SI'); cb('NO_36',r1c==='NO');
-  // Domicilio R1
-  tx('Text26',ins.r1calle);    tx('Text29',ins.r1numero);
-  tx('Text35',ins.r1piso);     tx('Text36',ins.r1torre);    tx('Text43',ins.r1depto);
-  tx('Text44',ins.r1localidad);tx('Text45',ins.r1distrito); tx('Text46',ins.r1provincia);
-  tx('Text47',ins.r1entreCalle);tx('Text48',ins.r1yCalle);  tx('Text49',ins.r1otroDato);
+  // Domicilio R1 — mapeo confirmado: Text44=calle, Text45=numero, Text46=piso,
+  // Text47=torre, Text48=depto, Text49=entreCalle, Text50=yCalle, Text64=otroDato,
+  // Text65=provincia, Text66=distrito, Text67=localidad, Text63=email
+  tx('Text44',ins.r1calle);    tx('Text45',ins.r1numero);
+  tx('Text46',ins.r1piso);     tx('Text47',ins.r1torre);    tx('Text48',ins.r1depto);
+  tx('Text49',ins.r1entreCalle);tx('Text50',ins.r1yCalle);  tx('Text64',ins.r1otroDato);
+  tx('Text65',ins.r1provincia);tx('Text66',ins.r1distrito); tx('Text67',ins.r1localidad);
   tx('Text51',ins.r1telFijoCod);tx('Text52',ins.r1telFijo);
   tx('Text53',ins.r1celularCod);tx('Text54',ins.r1celular);
-  tx('Text50',ins.r1email);
+  tx('Text63',ins.r1email);
 
   // ══ PÁGINA 4: RESPONSABLE 2 ════════════════════════════════
   const v2=t(ins.r2vinculo);
