@@ -541,9 +541,7 @@ function buildFieldValues(ins) {
   // Lugar de nacimiento
   cb('En Argentina',    t(ins.lugarNac)==='Argentina');
   cb('En el extranjero',t(ins.lugarNac)==='Extranjero');
-  // Provincia de nacimiento
-  cb('Buenos Aires',    t(ins.provinciaNac)==='Buenos Aires');
-  // Distrito y localidad de nacimiento (solo si nació en Buenos Aires)
+  cb('Buenos Aires', t(ins.provinciaNac)==='Buenos Aires');
   tx('Text30', ins.distritoNac||'');
   tx('Text31', ins.localidadNac||'');
 
@@ -557,9 +555,17 @@ function buildFieldValues(ins) {
   // Solo para quienes marcaron Bs As (y=293): Text88=Distrito, Text89=Localidad
   tx('Text88', ins.distrito);
   tx('Text89', ins.localidad);
-  // Teléfonos: Text90=CodFijo, Text91=Fijo, Text93=CodCel, Text92=Celular
-  tx('Text90', ins.telFijoCod); tx('Text91', ins.telFijo);
-  tx('Text93', ins.celularCod); tx('Text92', ins.celular);
+  // Teléfonos estudiante: si el número está vacío pero el cod tiene el número completo, usarlo así
+  const fixTel = (cod, num) => {
+    const c = (cod||'').trim(), n = (num||'').trim();
+    if (n) return [c, n];           // caso normal: ambos completos
+    if (c.length > 5) return ['', c]; // número completo fue al campo de cod área
+    return [c, n];
+  };
+  const [tfCod, tfNum] = fixTel(ins.telFijoCod, ins.telFijo);
+  const [tcCod, tcNum] = fixTel(ins.celularCod, ins.celular);
+  tx('Text90', tfCod); tx('Text91', tfNum);
+  tx('Text93', tcCod); tx('Text92', tcNum);
 
   // Otros datos
   cb('SI_4', t(ins.tieneHermanos)==='SI');
@@ -640,20 +646,18 @@ function buildFieldValues(ins) {
     ['Medicamentos',                              'Check Box14','Check Box17','Check Box25.0','Check Box26.0'],
     ['Vacunas',                                   'Check Box15','Check Box18','Check Box25.1','Check Box26.1'],
     ['Alimentos',                                 'Check Box16','Check Box19','Check Box25.2','Check Box26.2'],
-    ['Picaduras de Insectos',                     'Check Box20.0','Check Box22.0','Check Box29.0.0','Check Box29.0.1'],
-    ['Estacionales (Polen, ácaros, polvo, etc.)','Check Box20.1','Check Box22.1','Check Box29.1.0','Check Box29.1.1'],
-    ['Otras',                                     'Check Box20.2','Check Box22.2','Check Box29.2.0','Check Box29.2.1'],
+    ['Picaduras de Insectos',                     'Check Box6.0.0','Check Box6.0.1','Check Box29.0.0','Check Box29.0.1'],
+    ['Estacionales (Polen, ácaros, polvo, etc.)','Check Box6.1.0','Check Box6.1.1','Check Box29.1.0','Check Box29.1.1'],
+    ['Otras',                                     'Check Box7.0',  'Check Box7.1',  'Check Box29.2.0','Check Box29.2.1'],
   ].forEach(([k,si,no,siI,noI]) => {
     const a=al[k]||{};
     cb(si,  a.padece==='SI'); cb(no,  a.padece==='NO');
     cb(siI, a.internacion==='SI'); cb(noI, a.internacion==='NO');
   });
 
-  // SI_15 = disminución auditiva (y=205, x=212); SI_16/NO_16 = usa audífonos
-  sino('SI_15',null,    ins.dismAuditiva);
+  sino('SI_15','NO_15', ins.dismAuditiva);
   sino('SI_16','NO_16', ins.usaAudifonos);
-  // SI_17 = disminución visual (y=222, x=212); SI_18/NO_18 = usa lentes
-  sino('SI_17',null,    ins.dismVisual);
+  sino('SI_17','NO_17', ins.dismVisual);
   sino('SI_18','NO_18', ins.usaLentes);
   // SI_19/NO_20 = medicación habitual (y=238, x=212/504)
   sino('SI_19','NO_20', ins.medicacion);
@@ -673,11 +677,11 @@ function buildFieldValues(ins) {
   ].forEach(([k,si,no]) => { cb(si,af[k]==='SI'); cb(no,af[k]==='NO'); });
 
   // Establecimiento procedencia
-  tx('Text37', '');                // "Otra especificar" de provincia — vacío si es Buenos Aires
-  tx('Text38', ins.procDistrito);  // Distrito de procedencia
+  tx('Text37', '');  // Otra especificar — no usar
+  tx('Text38', ins.procDistrito);  // Distrito
   tx('Text39', ins.procNivel);
-  tx('Text40', ins.procEscuela);   // Nombre escuela
-  tx('Text41', ins.procEscuelaNro||''); // N° escuela
+  tx('Text40', ins.procEscuela);  // Nombre escuela
+  tx('Text41', ins.procEscuelaNro||'');
   cb('Buenos Aires_2', t(ins.procProvincia)==='Buenos Aires');
   cb('Estatal_2',  t(ins.procSector)==='Estatal');
   cb('Privado_2',  t(ins.procSector)==='Privado');
@@ -754,8 +758,10 @@ function buildFieldValues(ins) {
   tx('Text35',ins.r1piso);     tx('Text36',ins.r1torre);    tx('Text43',ins.r1depto);
   tx('Text44',ins.r1localidad);tx('Text45',ins.r1distrito); tx('Text46',ins.r1provincia);
   tx('Text47',ins.r1entreCalle);tx('Text48',ins.r1yCalle);  tx('Text49',ins.r1otroDato);
-  tx('Text51',ins.r1telFijoCod);tx('Text52',ins.r1telFijo);
-  tx('Text53',ins.r1celularCod);tx('Text54',ins.r1celular);
+  const [r1tfCod, r1tfNum] = fixTel(ins.r1telFijoCod, ins.r1telFijo);
+  const [r1tcCod, r1tcNum] = fixTel(ins.r1celularCod, ins.r1celular);
+  tx('Text51',r1tfCod); tx('Text52',r1tfNum);
+  tx('Text53',r1tcCod); tx('Text54',r1tcNum);
   tx('Text50',ins.r1email);
 
   // ══ PÁGINA 4: RESPONSABLE 2 ════════════════════════════════
@@ -797,8 +803,10 @@ function buildFieldValues(ins) {
   tx('Text65',ins.r2piso);     tx('Text66',ins.r2torre);    tx('Text67',ins.r2depto);
   tx('Text68',ins.r2entreCalle);tx('Text69',ins.r2yCalle);  tx('Text70',ins.r2otroDato);
   tx('Text71.0',ins.r2provincia);tx('Text71.1',ins.r2distrito);tx('Text72',ins.r2localidad);
-  tx('Text73',ins.r2telFijoCod);tx('Text74',ins.r2telFijo);
-  tx('Text75',ins.r2celularCod);tx('Text76',ins.r2celular);
+  const [r2tfCod, r2tfNum] = fixTel(ins.r2telFijoCod, ins.r2telFijo);
+  const [r2tcCod, r2tcNum] = fixTel(ins.r2celularCod, ins.r2celular);
+  tx('Text73',r2tfCod); tx('Text74',r2tfNum);
+  tx('Text75',r2tcCod); tx('Text76',r2tcNum);
   tx('Text77',ins.r2email);
 
   // Restricciones judiciales
@@ -840,26 +848,33 @@ window.generarPDF = async (id) => {
         if (fv.type === 'text') {
           const field = form.getTextField(fv.name);
           field.setText(fv.value);
-          // Ajuste automático de fuente según largo del texto
           const len = (fv.value || '').length;
-          const fontSize = len <= 20 ? 9 : len <= 35 ? 7 : 6;
-          field.setFontSize(fontSize);
+          field.setFontSize(len <= 20 ? 9 : len <= 35 ? 7 : 6);
         } else if (fv.type === 'check') {
           try {
             const field = form.getCheckBox(fv.name);
-            fv.value ? field.check() : field.uncheck();
-          } catch(e2) {
-            // Algunos checkboxes son en realidad RadioGroups en pdf-lib
+            if (fv.value) {
+              // Intentar con check() directo, si falla usar el export value
+              try { field.check(); }
+              catch(e) {
+                const opts = field.acroField.getOnValues();
+                if (opts && opts.length > 0) field.select(opts[0]);
+              }
+            } else {
+              field.uncheck();
+            }
+          } catch(e) {
+            // El campo puede ser un RadioGroup internamente
             try {
               const rg = form.getRadioGroup(fv.name);
               if (fv.value) rg.select('Yes');
-            } catch(e3) { /* ignorar */ }
+            } catch(e2) { /* ignorar silenciosamente */ }
           }
         } else if (fv.type === 'radio') {
           const field = form.getRadioGroup(fv.name);
           try { field.select(fv.value); } catch(e) { /* opción no disponible */ }
         }
-      } catch(e) { /* campo con tipo incorrecto, ignorar */ }
+      } catch(e) { /* campo inexistente o tipo incompatible */ }
     }
 
     // Aplanar para que no sea editable
