@@ -834,31 +834,33 @@ window.generarPDF = async (id) => {
         if (fv.type === 'text') {
           const field = form.getTextField(fv.name);
           field.setText(fv.value);
+          // Ajuste automático de fuente según largo del texto
           const len = (fv.value || '').length;
-          field.setFontSize(len <= 20 ? 9 : len <= 35 ? 7 : 6);
+          const fontSize = len <= 20 ? 9 : len <= 35 ? 7 : 6;
+          field.setFontSize(fontSize);
         } else if (fv.type === 'check') {
-          // Manipulación directa del diccionario PDF para máxima compatibilidad
-          const field = form.getCheckBox(fv.name);
-          const widgets = field.acroField.getWidgets();
-          if (fv.value) {
-            // Encontrar el export value real del widget
-            let onVal = 'Yes';
-            if (widgets.length > 0) {
-              const ap = widgets[0].dict.get(PDFLib.PDFName.of('AP'));
-              if (ap) {
-                const n = ap.get(PDFLib.PDFName.of('N'));
-                if (n) {
-                  const keys = [...n.keys()].map(k => k.value).filter(k => k !== 'Off');
-                  if (keys.length > 0) onVal = keys[0];
+          try {
+            const field = form.getCheckBox(fv.name);
+            const widgets = field.acroField.getWidgets();
+            if (fv.value) {
+              let onVal = 'Yes';
+              if (widgets.length > 0) {
+                const ap = widgets[0].dict.get(PDFLib.PDFName.of('AP'));
+                if (ap) {
+                  const n = ap.get(PDFLib.PDFName.of('N'));
+                  if (n) {
+                    const keys = [...n.keys()].map(k => k.value).filter(k => k !== 'Off');
+                    if (keys.length > 0) onVal = keys[0];
+                  }
                 }
               }
+              field.acroField.dict.set(PDFLib.PDFName.of('V'), PDFLib.PDFName.of(onVal));
+              widgets.forEach(w => w.dict.set(PDFLib.PDFName.of('AS'), PDFLib.PDFName.of(onVal)));
+            } else {
+              field.acroField.dict.set(PDFLib.PDFName.of('V'), PDFLib.PDFName.of('Off'));
+              widgets.forEach(w => w.dict.set(PDFLib.PDFName.of('AS'), PDFLib.PDFName.of('Off')));
             }
-            field.acroField.dict.set(PDFLib.PDFName.of('V'), PDFLib.PDFName.of(onVal));
-            widgets.forEach(w => w.dict.set(PDFLib.PDFName.of('AS'), PDFLib.PDFName.of(onVal)));
-          } else {
-            field.acroField.dict.set(PDFLib.PDFName.of('V'), PDFLib.PDFName.of('Off'));
-            widgets.forEach(w => w.dict.set(PDFLib.PDFName.of('AS'), PDFLib.PDFName.of('Off')));
-          }
+          } catch(e) { /* campo inexistente o incompatible */ }
         } else if (fv.type === 'radio') {
           const field = form.getRadioGroup(fv.name);
           try { field.select(fv.value); } catch(e) { /* opción no disponible */ }
