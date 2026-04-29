@@ -67,9 +67,8 @@ header{background:var(--az);color:#fff;position:sticky;top:0;z-index:100;box-sha
 .domr{background:var(--cel);border:1px solid var(--azc);border-radius:8px;padding:16px;margin-top:12px;display:none;}
 .domr .sub{color:var(--az);}
 /* Fila con cod área */
-.tel-row{display:flex;gap:6px;align-items:center;}
-.tel-row .cod{width:68px;flex-shrink:0;font-size:.72rem!important;}
-.tel-row input:not(.cod){font-size:.72rem!important;}
+.tel-row{display:flex;gap:8px;}
+.tel-row .cod{width:100px;flex-shrink:0;}
 /* Botón enviar */
 .benv{width:100%;padding:15px;background:var(--az);color:#fff;border:none;border-radius:10px;font-family:'DM Serif Display',serif;font-size:1.05rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:26px;}
 .benv:hover{background:var(--azc);transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,58,107,.3);}
@@ -150,14 +149,6 @@ header{background:var(--az);color:#fff;position:sticky;top:0;z-index:100;box-sha
         <option value="Buenos Aires">Buenos Aires</option>
         <option value="Otra">Otra (especificar)</option>
       </select>
-    </div>
-    <div class="c" id="grpDistritoNac" style="display:none">
-      <label>Distrito de nacimiento</label>
-      <input type="text" id="distritoNac" placeholder="Ej: La Matanza">
-    </div>
-    <div class="c" id="grpLocalidadNac" style="display:none">
-      <label>Localidad de nacimiento</label>
-      <input type="text" id="localidadNac" placeholder="Ej: Isidro Casanova">
     </div>
 
     <div class="c full">
@@ -259,15 +250,15 @@ header{background:var(--az);color:#fff;position:sticky;top:0;z-index:100;box-sha
     <div class="c">
       <label>Teléfono fijo</label>
       <div class="tel-row">
-        <input type="text" id="telFijoCod" class="cod" placeholder="Ej: 011" maxlength="6">
-        <input type="text" id="telFijo" placeholder="Número sin código de área">
+        <input type="text" id="telFijoCod" class="cod" placeholder="Cód. área">
+        <input type="text" id="telFijo" placeholder="Número">
       </div>
     </div>
     <div class="c">
       <label>Teléfono celular</label>
       <div class="tel-row">
-        <input type="text" id="celularCod" class="cod" placeholder="Ej: 011" maxlength="6">
-        <input type="text" id="celular" placeholder="Número sin código de área">
+        <input type="text" id="celularCod" class="cod" placeholder="Cód. área">
+        <input type="text" id="celular" placeholder="Número">
       </div>
     </div>
   </div>
@@ -409,14 +400,14 @@ header{background:var(--az);color:#fff;position:sticky;top:0;z-index:100;box-sha
       <span>Internación en sala común</span>
       <div class="sm">
         <label><input type="radio" name="internComun" value="SI"> SI</label>
-        <label><input type="radio" name="internComun" value="NO" checked> NO</label>
+        <label><input type="radio" name="internComun" value="NO"> NO</label>
       </div>
     </div>
     <div class="ti">
       <span>Internación en cuidados intermedios/intensivos</span>
       <div class="sm">
         <label><input type="radio" name="internIntensivos" value="SI"> SI</label>
-        <label><input type="radio" name="internIntensivos" value="NO" checked> NO</label>
+        <label><input type="radio" name="internIntensivos" value="NO"> NO</label>
       </div>
     </div>
   </div>
@@ -825,8 +816,8 @@ header{background:var(--az);color:#fff;position:sticky;top:0;z-index:100;box-sha
     <div class="c">
       <label>Teléfono celular <span class="r">*</span></label>
       <div class="tel-row">
-        <input type="text" id="r1celularCod" class="cod" placeholder="Ej: 011" maxlength="6">
-        <input type="text" id="r1celular" placeholder="Número sin código de área">
+        <input type="text" id="r1celularCod" class="cod" placeholder="Cód. área">
+        <input type="text" id="r1celular" placeholder="Número">
       </div>
     </div>
     <div class="c"><label>Correo electrónico</label><input type="email" id="r1email" placeholder="correo@ejemplo.com"></div>
@@ -1066,7 +1057,7 @@ function buildSiNoGrid(containerId, conds, prefix) {
   document.getElementById(containerId).innerHTML = conds.map((c,i) => `
     <div class="ti"><span>${c}</span><div class="sm">
       <label><input type="radio" name="${prefix}_${i}" value="SI"> SI</label>
-      <label><input type="radio" name="${prefix}_${i}" value="NO" checked> NO</label>
+      <label><input type="radio" name="${prefix}_${i}" value="NO"> NO</label>
     </div></div>`).join('');
 }
 buildSiNoGrid('grSalud',    COND_SALUD,    'sal');
@@ -1081,9 +1072,9 @@ document.getElementById('grAlergias').innerHTML = `
       <span style="font-weight:600">${a}</span>
       <div style="display:flex;gap:12px;font-size:.76rem">
         <span>¿Padece? <label style="margin-left:4px"><input type="radio" name="alg_${i}" value="SI"> SI</label>
-          <label style="margin-left:4px"><input type="radio" name="alg_${i}" value="NO" checked> NO</label></span>
+          <label style="margin-left:4px"><input type="radio" name="alg_${i}" value="NO"> NO</label></span>
         <span>¿Internación? <label style="margin-left:4px"><input type="radio" name="algInt_${i}" value="SI"> SI</label>
-          <label style="margin-left:4px"><input type="radio" name="algInt_${i}" value="NO" checked> NO</label></span>
+          <label style="margin-left:4px"><input type="radio" name="algInt_${i}" value="NO"> NO</label></span>
       </div>
     </div>`).join('')}
   </div>`;
@@ -1145,16 +1136,6 @@ function actualizarDistritoLocalidad() {
 document.getElementById('provincia').addEventListener('change', actualizarDistritoLocalidad);
 actualizarDistritoLocalidad(); // ejecutar al cargar
 
-// Distrito/Localidad de nacimiento — solo si nació en Buenos Aires
-function actualizarNacBsAs() {
-  const esBsAs = document.getElementById('provinciaNac').value === 'Buenos Aires';
-  document.getElementById('grpDistritoNac').style.display = esBsAs ? '' : 'none';
-  document.getElementById('grpLocalidadNac').style.display = esBsAs ? '' : 'none';
-  if (!esBsAs) { document.getElementById('distritoNac').value = ''; document.getElementById('localidadNac').value = ''; }
-}
-document.getElementById('provinciaNac').addEventListener('change', actualizarNacBsAs);
-actualizarNacBsAs();
-
 // ── PROGRESO ──────────────────────────────────────────
 const REQS = ['apellido','nombre','fechaNac','genero','tieneDni','calle','localidad','ciclo','anio','turno','condicion','r1vinculo','r1apellido','r1nombre','r1celular'];
 const updProg = () => {
@@ -1166,7 +1147,7 @@ document.querySelectorAll('input,select,textarea').forEach(el => el.addEventList
 // ── HELPERS ───────────────────────────────────────────
 const v   = id => (document.getElementById(id)?.value||'').trim();
 const chk = name => [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(c=>c.value).join(', ');
-const rad = name => document.querySelector(`input[name="${name}"]:checked`)?.value||'NO';
+const rad = name => document.querySelector(`input[name="${name}"]:checked`)?.value||'';
 const grid = (prefix, conds) => Object.fromEntries(conds.map((c,i) => [c, rad(`${prefix}_${i}`)]));
 const algGrid = () => Object.fromEntries(TIPOS_ALERGIA.map((a,i) => [a, { padece: rad(`alg_${i}`), internacion: rad(`algInt_${i}`) }]));
 
@@ -1196,7 +1177,7 @@ document.getElementById('f').addEventListener('submit', async e => {
       apellido: v('apellido').toUpperCase(), nombre: v('nombre'),
       fechaNac: v('fechaNac'), genero: v('genero'),
       lugarNac: v('lugarNac'), nacionalidad: v('nacionalidad'),
-      provinciaNac: v('provinciaNac'), distritoNac: v('distritoNac'), localidadNac: v('localidadNac'),
+      provinciaNac: v('provinciaNac'),
       tieneDni: v('tieneDni'), numeroDni: v('numeroDni'), cuil: v('cuil'),
       tieneCpi: v('tieneCpi'),
       tieneDocExt: v('tieneDocExt'), tipoDocExt: v('tipoDocExt'), nroDocExt: v('nroDocExt'),
