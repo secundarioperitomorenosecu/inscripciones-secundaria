@@ -525,7 +525,8 @@ function buildFieldValues(ins) {
   }
   tx('Text6', cp[0]||''); tx('Text8', cp[1]||''); tx('Text9', cp[2]||'');
   tx('Text11', ins.nacionalidad);
-  tx('Text10', ins.provinciaNac); // "Otra" provincia de nacimiento
+  tx('Text10', ins.nroDocExt);   // N° documento extranjero (si tiene)
+  // provinciaNac "Otra" — no tiene campo de texto en el PDF (solo checkbox Buenos Aires)
 
   // DNI
   const dni = t(ins.tieneDni);
@@ -559,9 +560,20 @@ function buildFieldValues(ins) {
   // Solo para quienes marcaron Bs As — nacimiento: Text88=Distrito, Text89=Localidad
   tx('Text88', ins.distritoNac || ins.distrito);
   tx('Text89', ins.localidadNac || ins.localidad);
-  // Teléfonos: Text90=CodFijo, Text91=Fijo, Text93=CodCel, Text92=Celular
-  tx('Text90', ins.telFijoCod); tx('Text91', ins.telFijo);
-  tx('Text93', ins.celularCod); tx('Text92', ins.celular);
+  // Teléfonos estudiante — fixTel: si el cod tiene >5 dígitos, es número completo
+  function splitTel(cod, num) {
+    const c = (cod||'').replace(/\D/g,'');
+    const n = (num||'').replace(/\D/g,'');
+    if (c.length > 6 && n === '') {
+      // número completo en campo cod — separar primeros 4 como cod, resto como número
+      return [c.slice(0,4), c.slice(4)];
+    }
+    return [c, n];
+  }
+  const [telFijoCod2, telFijo2] = splitTel(ins.telFijoCod, ins.telFijo);
+  const [celCod2, cel2]         = splitTel(ins.celularCod,  ins.celular);
+  tx('Text90', telFijoCod2); tx('Text91', telFijo2);
+  tx('Text93', celCod2);     tx('Text92', cel2);
 
   // Otros datos
   cb('SI_4', t(ins.tieneHermanos)==='SI');
@@ -591,25 +603,25 @@ function buildFieldValues(ins) {
   sino('SI_11.0','NO_11', ins.obraSocial);
   tx('Text94', ins.nombreObraSocial); tx('Text95', ins.nroAfiliado);
 
-  // Antecedentes personales salud — Check Box1.x.0=SI, Check Box1.x.1=NO (columna izq)
-  // Check Box4.x.0=SI, Check Box4.x.1=NO (columna der)
+  // Antecedentes personales salud
+  // Col izquierda: Check Box1.x (8 filas) — Col derecha: Check Box4.x/5/6.x/7 (7 filas)
   const s = ins.salud || {};
   [
-    ['Asma / Broncoespasmos a repetición',                               'Check Box8.0.0','Check Box8.0.1'],
-    ['Celiaquía',                                                         'Check Box8.1.0','Check Box8.1.1'],
-    ['Problemas / Condiciones cardíacas',                                 'Check Box8.2.0','Check Box8.2.1'],
-    ['Diabetes',                                                          'Check Box1.0.0','Check Box1.0.1'],
-    ['Presión arterial elevada',                                          'Check Box1.1.0','Check Box1.1.1'],
-    ['Convulsiones',                                                      'Check Box1.2.0','Check Box1.2.1'],
-    ['Alteraciones sanguíneas',                                           'Check Box1.3.0','Check Box1.3.1'],
-    ['Quemaduras moderadas o severas',                                    'Check Box5.0',  'Check Box5.1'],
-    ['Falta o no funcionamiento de algún órgano',                         'Check Box9.0.0','Check Box9.0.1'],
-    ['Enfermedad oncohematológica',                                       'Check Box9.1.0','Check Box9.1.1'],
-    ['Inmunodeficiencias (bajas defensas) por enfermedad o medicamentos', 'Check Box9.2.0','Check Box9.2.1'],
-    ['Fracturas, luxaciones, lesiones ligamentarias previas',             'Check Box1.4.0','Check Box1.4.1'],
-    ['Otro problema en los huesos o articulaciones',                      'Check Box1.5.0','Check Box1.5.1'],
-    ['Traumatismo de cráneo con observación en guardia o internación',    'Check Box1.6.0','Check Box1.6.1'],
-    ['Problemas de piel',                                                 'Check Box1.7.0','Check Box1.7.1'],
+    ['Asma / Broncoespasmos a repetición',                                         'Check Box1.0.0','Check Box1.0.1'],
+    ['Celiaquía',                                                                  'Check Box1.1.0','Check Box1.1.1'],
+    ['Problemas / Condiciones cardíacas',                                          'Check Box1.2.0','Check Box1.2.1'],
+    ['Diabetes',                                                                   'Check Box1.3.0','Check Box1.3.1'],
+    ['Presión arterial elevada',                                                   'Check Box1.4.0','Check Box1.4.1'],
+    ['Convulsiones',                                                               'Check Box1.5.0','Check Box1.5.1'],
+    ['Alteraciones sanguíneas',                                                    'Check Box1.6.0','Check Box1.6.1'],
+    ['Quemaduras moderadas o severas',                                             'Check Box1.7.0','Check Box1.7.1'],
+    ['Falta o no funcionamiento de algún órgano',                                  'Check Box4.0.0','Check Box4.0.1'],
+    ['Enfermedad oncohematológica',                                                'Check Box4.1.0','Check Box4.1.1'],
+    ['Inmunodeficiencias (bajas defensas) por enfermedad o medicamentos',          'Check Box4.2.0','Check Box4.2.1'],
+    ['Fracturas, luxaciones, lesiones ligamentarias previas',                      'Check Box5.0',  'Check Box5.1'],
+    ['Otro problema en los huesos o articulaciones',                               'Check Box6.0.0','Check Box6.0.1'],
+    ['Traumatismo de cráneo con observación en guardia o internación',             'Check Box6.1.0','Check Box6.1.1'],
+    ['Problemas de piel',                                                          'Check Box7.0',  'Check Box7.1'],
   ].forEach(([k,si,no]) => { cb(si,s[k]==='SI'); cb(no,s[k]==='NO'); });
 
   // ══ PÁGINA 2 ════════════════════════════════════════════════
@@ -662,8 +674,7 @@ function buildFieldValues(ins) {
   tx('undefined_41', ins.cualMedicacion);
   // SI_21/NO_21 = operación (y=262, x=147/173)
   sino('SI_21','NO_21', ins.operacion);
-  tx('Text42', ins.motivoOperacion);
-  tx('Text43', ins.anioOperacion);
+  tx('Text42', ins.motivoOperacion); // motivo operación — año no tiene campo en el PDF
 
   // Antecedentes familiares col izq (Muerte súbita, Diabetes, Problemas cardíacos) → Check Box29
   // col der (Tos crónica, Celiaquía) → Check Box35, Check Box36
@@ -691,7 +702,8 @@ function buildFieldValues(ins) {
   cb('Municipal',  t(ins.procDependencia)==='Municipal');
   cb('Nacional',   t(ins.procDependencia)==='Nacional');
   cb('Privada',    t(ins.procDependencia)==='Privada');
-  tx('Text27', ins.escuelaNombre); tx('Text28', ins.escuelaNro);
+  tx('Text27', ins.orientacion); // orientación (x0=175, y=494 en p2)
+  // Text28 = año del establecimiento donde se inscribe (no lo tenemos, dejarlo vacío)
 
   // Inscripción
   const ciclo = t(ins.ciclo);
@@ -845,7 +857,7 @@ window.generarPDF = async (id) => {
     // Coordenadas exactas de cada checkbox (cx, cy en puntos PDF, página base 0)
     // Obtenidas inspeccionando el PDF plantilla con pypdf
     const CHECKBOX_COORDS = {
-      // Página 1 — Salud columna izquierda (Check Box1.x.0=SI, Check Box1.x.1=NO)
+      // Página 1 — Salud col izq (Check Box1) — 8 filas
       'Check Box1.0.0':{p:0,cx:214.8,cy:132.3}, 'Check Box1.0.1':{p:0,cx:232.0,cy:132.3},
       'Check Box1.1.0':{p:0,cx:214.8,cy:116.5}, 'Check Box1.1.1':{p:0,cx:232.0,cy:116.5},
       'Check Box1.2.0':{p:0,cx:214.8,cy:100.8}, 'Check Box1.2.1':{p:0,cx:232.0,cy:100.8},
@@ -854,25 +866,14 @@ window.generarPDF = async (id) => {
       'Check Box1.5.0':{p:0,cx:214.8,cy:53.6},  'Check Box1.5.1':{p:0,cx:232.0,cy:53.6},
       'Check Box1.6.0':{p:0,cx:214.8,cy:37.8},  'Check Box1.6.1':{p:0,cx:232.0,cy:37.8},
       'Check Box1.7.0':{p:0,cx:214.8,cy:22.1},  'Check Box1.7.1':{p:0,cx:232.0,cy:22.1},
-      // Página 1 — Salud columna derecha (Check Box4.x.0=SI, Check Box4.x.1=NO)
+      // Página 1 — Salud col der — 7 filas
       'Check Box4.0.0':{p:0,cx:555.9,cy:132.6}, 'Check Box4.0.1':{p:0,cx:576.2,cy:132.6},
       'Check Box4.1.0':{p:0,cx:555.9,cy:116.2}, 'Check Box4.1.1':{p:0,cx:576.2,cy:116.2},
       'Check Box4.2.0':{p:0,cx:555.9,cy:99.7},  'Check Box4.2.1':{p:0,cx:576.2,cy:99.7},
-      // Página 1 — Salud columna derecha fila 4 (Quemaduras=Check Box5)
-      'Check Box5.0':{p:0,cx:556.3,cy:84.7},    'Check Box5.1':{p:0,cx:575.8,cy:84.7},
-      // Página 1 — Salud columna derecha filas 5-6 (Check Box6)
+      'Check Box5.0'  :{p:0,cx:556.3,cy:84.7},  'Check Box5.1'  :{p:0,cx:575.8,cy:84.7},
       'Check Box6.0.0':{p:0,cx:557.0,cy:71.2},  'Check Box6.0.1':{p:0,cx:576.5,cy:71.2},
       'Check Box6.1.0':{p:0,cx:557.4,cy:49.1},  'Check Box6.1.1':{p:0,cx:577.3,cy:49.1},
-      // Página 1 — Salud columna derecha fila 8 (Problemas piel=Check Box7)
-      'Check Box7.0':{p:0,cx:555.9,cy:24.7},    'Check Box7.1':{p:0,cx:576.2,cy:24.7},
-      // Página 2 — Asma/Celiaquía/Cardíacas (Check Box8)
-      'Check Box8.0.0':{p:1,cx:212.2,cy:787.9}, 'Check Box8.0.1':{p:1,cx:231.7,cy:787.9},
-      'Check Box8.1.0':{p:1,cx:212.2,cy:768.4}, 'Check Box8.1.1':{p:1,cx:231.7,cy:768.4},
-      'Check Box8.2.0':{p:1,cx:212.2,cy:748.9}, 'Check Box8.2.1':{p:1,cx:231.7,cy:748.9},
-      // Página 2 — Falta órgano/Oncohematológica/Inmunodeficiencias (Check Box9)
-      'Check Box9.0.0':{p:1,cx:554.0,cy:787.9}, 'Check Box9.0.1':{p:1,cx:573.5,cy:787.9},
-      'Check Box9.1.0':{p:1,cx:554.0,cy:768.4}, 'Check Box9.1.1':{p:1,cx:573.5,cy:768.4},
-      'Check Box9.2.0':{p:1,cx:554.0,cy:748.9}, 'Check Box9.2.1':{p:1,cx:573.5,cy:748.9},
+      'Check Box7.0'  :{p:0,cx:555.9,cy:24.7},  'Check Box7.1'  :{p:0,cx:576.2,cy:24.7},
       // Página 2 — Internaciones
       'Check Box10':{p:1,cx:261.7,cy:701.2}, 'Check Box12':{p:1,cx:282.7,cy:701.7},
       'Check Box11':{p:1,cx:262.4,cy:683.4}, 'Check Box13':{p:1,cx:282.7,cy:682.7},
