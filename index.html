@@ -667,18 +667,17 @@ function buildFieldValues(ins) {
     cb(siI, a.internacion==='SI'); cb(noI, a.internacion==='NO');
   });
 
-  // SI_15 = disminución auditiva (y=205, x=212); SI_16/NO_16 = usa audífonos
-  sino('SI_15',null,    ins.dismAuditiva);
-  sino('SI_16','NO_16', ins.usaAudifonos);
-  // SI_17 = disminución visual (y=222, x=212); SI_18/NO_18 = usa lentes
-  sino('SI_17',null,    ins.dismVisual);
-  sino('SI_18','NO_18', ins.usaLentes);
-  // SI_19/NO_20 = medicación habitual (y=238, x=212/504)
-  sino('SI_19','NO_20', ins.medicacion);
-  tx('undefined_41', ins.cualMedicacion);
-  // SI_21/NO_21 = operación (y=262, x=147/173)
+  // Operación: SI_21/NO_21 | Medicación habitual: SI_22/NO_22
   sino('SI_21','NO_21', ins.operacion);
-  tx('Text27', ins.motivoOperacion); // motivo operación → fila "¿por qué motivo?" en p2
+  sino('SI_22','NO_22', ins.medicacion);
+  tx('undefined_41', ins.cualMedicacion);
+  tx('Text27', ins.motivoOperacion); // motivo operación
+  // Disminución auditiva: SI_23/NO_23 | Usa audífonos: SI_24/NO_24
+  sino('SI_23','NO_23', ins.dismAuditiva);
+  sino('SI_24','NO_24', ins.usaAudifonos);
+  // Disminución visual: SI_25/"NO En caso af" | Usa lentes: SI_26/NO_25
+  sino('SI_25','NO En caso af', ins.dismVisual);
+  sino('SI_26','NO_25', ins.usaLentes);
 
   // Antecedentes familiares col izq (Muerte súbita, Diabetes, Problemas cardíacos) → Check Box29
   // col der (Tos crónica, Celiaquía) → Check Box35, Check Box36
@@ -891,15 +890,16 @@ window.generarPDF = async (id) => {
       // SI/NO normales p1 (obra social, DNI, etc.)
       'SI_10':{p:0,cx:523.4,cy:245.4},  'NO_10':{p:0,cx:552.9,cy:245.4},
       'SI_11.0':{p:0,cx:110.6,cy:203.5},'NO_11':{p:0,cx:140.1,cy:203.4},
-      // SI/NO normales p2
+      // SI/NO normales p2 — internaciones y alergias general
       'SI_13':{p:1,cx:212.6,cy:787.1},  'NO_13':{p:1,cx:233.0,cy:787.1},
       'SI_14':{p:1,cx:260.7,cy:663.2},  'NO_14':{p:1,cx:287.2,cy:663.2},
-      'SI_15':{p:1,cx:218.4,cy:630.8},
-      'SI_16':{p:1,cx:510.2,cy:630.8},  'NO_16':{p:1,cx:537.2,cy:630.8},
-      'SI_17':{p:1,cx:218.4,cy:614.5},
-      'SI_18':{p:1,cx:510.2,cy:614.5},  'NO_18':{p:1,cx:537.2,cy:614.5},
-      'SI_19':{p:1,cx:218.4,cy:598.1},  'NO_20':{p:1,cx:537.2,cy:598.1},
+      // operación, medicación, disminución auditiva/visual
       'SI_21':{p:1,cx:153.1,cy:573.5},  'NO_21':{p:1,cx:179.5,cy:573.5},
+      'SI_22':{p:1,cx:380.2,cy:573.5},  'NO_22':{p:1,cx:406.6,cy:573.5},
+      'SI_23':{p:1,cx:153.1,cy:553.2},  'NO_23':{p:1,cx:179.5,cy:553.2},
+      'SI_24':{p:1,cx:362.9,cy:553.2},  'NO_24':{p:1,cx:389.3,cy:553.2},
+      'SI_25':{p:1,cx:264.5,cy:532.8},  'NO En caso af':{p:1,cx:290.9,cy:532.8},
+      'SI_26':{p:1,cx:142.5,cy:512.5},  'NO_25':{p:1,cx:168.9,cy:512.5},
       // SI/NO normales p3
       'SI_28':{p:2,cx:173.5,cy:727.0},  'NO_27':{p:2,cx:204.8,cy:727.0},
       'SI_29':{p:2,cx:220.2,cy:646.0},  'NO_28':{p:2,cx:250.5,cy:646.0},
