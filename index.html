@@ -560,13 +560,13 @@ function buildFieldValues(ins) {
   // Solo para quienes marcaron Bs As — nacimiento: Text88=Distrito, Text89=Localidad
   tx('Text88', ins.distritoNac || ins.distrito);
   tx('Text89', ins.localidadNac || ins.localidad);
-  // Teléfonos estudiante — fixTel: si el cod tiene >5 dígitos, es número completo
+  // Teléfonos estudiante — siempre: últimos 8 dígitos = número, resto = código de área
   function splitTel(cod, num) {
     const c = (cod||'').replace(/\D/g,'');
     const n = (num||'').replace(/\D/g,'');
-    if (c.length > 6 && n === '') {
-      // número completo en campo cod — separar primeros 4 como cod, resto como número
-      return [c.slice(0,4), c.slice(4)];
+    const full = c.length > 6 && n === '' ? c : c + n;
+    if (full.length >= 8) {
+      return [full.slice(0, full.length - 8), full.slice(-8)];
     }
     return [c, n];
   }
@@ -625,15 +625,15 @@ function buildFieldValues(ins) {
   ].forEach(([k,si,no]) => { cb(si,s[k]==='SI'); cb(no,s[k]==='NO'); });
 
   // ══ PÁGINA 2 ════════════════════════════════════════════════
-  // Ejercicio — Check Box20.x, Check Box22.x (col izq) / Check Box23.x, Check Box24.x (col der)
+  // Ejercicio — Check Box8.x.0=SI Check Box8.x.1=NO (col izq) / Check Box9.x.0=SI Check Box9.x.1=NO (col der)
   const ej = ins.ejercicio || {};
   [
-    ['Desmayos',                                                          'Check Box20.0','Check Box22.0'],
-    ['Dolor fuerte en el pecho',                                          'Check Box20.1','Check Box22.1'],
-    ['Mareos',                                                            'Check Box20.2','Check Box22.2'],
-    ['Mayor cansancio que sus compañeros/as',                             'Check Box23.0','Check Box24.0'],
-    ['Palpitaciones',                                                     'Check Box23.1','Check Box24.1'],
-    ['Dificultad para respirar durante o después de la actividad física', 'Check Box23.2','Check Box24.2'],
+    ['Desmayos',                                                          'Check Box8.0.0','Check Box8.0.1'],
+    ['Dolor fuerte en el pecho',                                          'Check Box8.1.0','Check Box8.1.1'],
+    ['Mareos',                                                            'Check Box8.2.0','Check Box8.2.1'],
+    ['Mayor cansancio que sus compañeros/as',                             'Check Box9.0.0','Check Box9.0.1'],
+    ['Palpitaciones',                                                     'Check Box9.1.0','Check Box9.1.1'],
+    ['Dificultad para respirar durante o después de la actividad física', 'Check Box9.2.0','Check Box9.2.1'],
   ].forEach(([k,si,no]) => { cb(si,ej[k]==='SI'); cb(no,ej[k]==='NO'); });
 
   // Internaciones — SI_13/NO_13 son Text en el PDF (raro), Check Box10/11/12/13
@@ -646,17 +646,18 @@ function buildFieldValues(ins) {
   tx('Cuántas veces_2',                      ins.cantInternaciones2);
   tx('Indique las causas o diagnósticos_2',  ins.causaInternacion2);
 
-  // Alergias — SI_14/NO_14 = tiene alergia grave (y=173)
+  // Alergias — SI_14/NO_14 = tiene alergia grave
   sino('SI_14','NO_14', ins.tieneAlergia);
-  // Tipos de alergia: Check Box14..19 (col SI/NO), Check Box25.x/26.x (internación)
+  // Tipos de alergia col izq: Check Box14=SI, Check Box17=NO + Check Box25/26=internación
+  // Tipos de alergia col der: Check Box20=SI, Check Box22=NO + Check Box23/24=internación
   const al = ins.alergias || {};
   [
     ['Medicamentos',                              'Check Box14',   'Check Box17',   'Check Box25.0','Check Box26.0'],
     ['Vacunas',                                   'Check Box15',   'Check Box18',   'Check Box25.1','Check Box26.1'],
     ['Alimentos',                                 'Check Box16',   'Check Box19',   'Check Box25.2','Check Box26.2'],
-    ['Picaduras de Insectos',                     'Check Box27.0', 'Check Box28.0', 'Check Box29.0.0','Check Box29.0.1'],
-    ['Estacionales (Polen, ácaros, polvo, etc.)','Check Box27.1', 'Check Box28.1', 'Check Box29.1.0','Check Box29.1.1'],
-    ['Otras',                                     'Check Box27.2', 'Check Box28.2', 'Check Box29.2.0','Check Box29.2.1'],
+    ['Picaduras de Insectos',                     'Check Box20.0', 'Check Box22.0', 'Check Box23.0','Check Box24.0'],
+    ['Estacionales (Polen, ácaros, polvo, etc.)','Check Box20.1', 'Check Box22.1', 'Check Box23.1','Check Box24.1'],
+    ['Otras',                                     'Check Box20.2', 'Check Box22.2', 'Check Box23.2','Check Box24.2'],
   ].forEach(([k,si,no,siI,noI]) => {
     const a=al[k]||{};
     cb(si,  a.padece==='SI'); cb(no,  a.padece==='NO');
@@ -774,8 +775,10 @@ function buildFieldValues(ins) {
   tx('Text46',ins.r1piso);     tx('Text47',ins.r1torre);    tx('Text48',ins.r1depto);
   tx('Text49',ins.r1entreCalle);tx('Text50',ins.r1yCalle);  tx('Text64',ins.r1otroDato);
   tx('Text65',ins.r1provincia);tx('Text66',ins.r1distrito); tx('Text67',ins.r1localidad);
-  tx('Text51',ins.r1telFijoCod);tx('Text52',ins.r1telFijo);
-  tx('Text53',ins.r1celularCod);tx('Text54',ins.r1celular);
+  const [r1tfc,r1tf] = splitTel(ins.r1telFijoCod, ins.r1telFijo);
+  const [r1cc,r1c2]  = splitTel(ins.r1celularCod,  ins.r1celular);
+  tx('Text51',r1tfc); tx('Text52',r1tf);
+  tx('Text53',r1cc);  tx('Text54',r1c2);
   tx('Text63',ins.r1email);
 
   // ══ PÁGINA 4: RESPONSABLE 2 ════════════════════════════════
@@ -817,8 +820,10 @@ function buildFieldValues(ins) {
   tx('Text65',ins.r2piso);     tx('Text66',ins.r2torre);    tx('Text67',ins.r2depto);
   tx('Text68',ins.r2entreCalle);tx('Text69',ins.r2yCalle);  tx('Text70',ins.r2otroDato);
   tx('Text71.0',ins.r2provincia);tx('Text71.1',ins.r2distrito);tx('Text72',ins.r2localidad);
-  tx('Text73',ins.r2telFijoCod);tx('Text74',ins.r2telFijo);
-  tx('Text75',ins.r2celularCod);tx('Text76',ins.r2celular);
+  const [r2tfc,r2tf] = splitTel(ins.r2telFijoCod, ins.r2telFijo);
+  const [r2cc,r2c2]  = splitTel(ins.r2celularCod,  ins.r2celular);
+  tx('Text73',r2tfc); tx('Text74',r2tf);
+  tx('Text75',r2cc);  tx('Text76',r2c2);
   tx('Text77',ins.r2email);
 
   // Restricciones judiciales
@@ -874,7 +879,41 @@ window.generarPDF = async (id) => {
       'Check Box6.0.0':{p:0,cx:557.0,cy:71.2},  'Check Box6.0.1':{p:0,cx:576.5,cy:71.2},
       'Check Box6.1.0':{p:0,cx:557.4,cy:49.1},  'Check Box6.1.1':{p:0,cx:577.3,cy:49.1},
       'Check Box7.0'  :{p:0,cx:555.9,cy:24.7},  'Check Box7.1'  :{p:0,cx:576.2,cy:24.7},
-      // Página 2 — Internaciones
+      // SI/NO normales p1 (obra social, DNI, etc.)
+      'SI_10':{p:0,cx:523.4,cy:245.4},  'NO_10':{p:0,cx:552.9,cy:245.4},
+      'SI_11.0':{p:0,cx:110.6,cy:203.5},'NO_11':{p:0,cx:140.1,cy:203.4},
+      // SI/NO normales p2
+      'SI_13':{p:1,cx:212.6,cy:787.1},  'NO_13':{p:1,cx:233.0,cy:787.1},
+      'SI_14':{p:1,cx:260.7,cy:663.2},  'NO_14':{p:1,cx:287.2,cy:663.2},
+      'SI_15':{p:1,cx:218.4,cy:630.8},
+      'SI_16':{p:1,cx:510.2,cy:630.8},  'NO_16':{p:1,cx:537.2,cy:630.8},
+      'SI_17':{p:1,cx:218.4,cy:614.5},
+      'SI_18':{p:1,cx:510.2,cy:614.5},  'NO_18':{p:1,cx:537.2,cy:614.5},
+      'SI_19':{p:1,cx:218.4,cy:598.1},  'NO_20':{p:1,cx:537.2,cy:598.1},
+      'SI_21':{p:1,cx:153.1,cy:573.5},  'NO_21':{p:1,cx:179.5,cy:573.5},
+      // SI/NO normales p3
+      'SI_28':{p:2,cx:173.5,cy:727.0},  'NO_27':{p:2,cx:204.8,cy:727.0},
+      'SI_29':{p:2,cx:220.2,cy:646.0},  'NO_28':{p:2,cx:250.5,cy:646.0},
+      'SI_30':{p:2,cx:206.6,cy:584.5},  'NO_29':{p:2,cx:242.0,cy:584.5},
+      'SI_31':{p:2,cx:171.9,cy:564.5},  'NO_30':{p:2,cx:206.2,cy:564.5},
+      'SI_32':{p:2,cx:171.9,cy:544.3},  'NO_31':{p:2,cx:206.2,cy:544.3},
+      'SI_33':{p:2,cx:417.5,cy:337.0},  'NO_32':{p:2,cx:443.9,cy:337.0},
+      'NO_33':{p:2,cx:556.5,cy:316.4},
+      'SI_34':{p:2,cx:520.5,cy:296.3},  'NO_34':{p:2,cx:556.5,cy:296.3},
+      'SI_35':{p:2,cx:117.4,cy:255.7},  'NO_35':{p:2,cx:143.8,cy:255.7},
+      'SI_36':{p:2,cx:230.8,cy:173.9},  'NO_36':{p:2,cx:265.5,cy:173.9},
+      // SI/NO normales p4
+      'SI_37':{p:3,cx:416.7,cy:712.6},  'NO_37':{p:3,cx:443.1,cy:712.6},
+      'NO_38':{p:3,cx:559.0,cy:691.1},
+      'SI_38':{p:3,cx:529.0,cy:670.7},  'NO_39':{p:3,cx:559.4,cy:670.7},
+      'SI_39':{p:3,cx:129.3,cy:630.5},  'NO_40':{p:3,cx:165.7,cy:630.5},
+      'SI_40':{p:3,cx:235.4,cy:549.0},  'NO_41':{p:3,cx:270.1,cy:549.0},
+      'Check Box8.0.0':{p:1,cx:212.2,cy:787.9}, 'Check Box8.0.1':{p:1,cx:231.7,cy:787.9},
+      'Check Box8.1.0':{p:1,cx:212.2,cy:768.4}, 'Check Box8.1.1':{p:1,cx:231.7,cy:768.4},
+      'Check Box8.2.0':{p:1,cx:212.2,cy:748.9}, 'Check Box8.2.1':{p:1,cx:231.7,cy:748.9},
+      'Check Box9.0.0':{p:1,cx:554.0,cy:787.9}, 'Check Box9.0.1':{p:1,cx:573.5,cy:787.9},
+      'Check Box9.1.0':{p:1,cx:554.0,cy:768.4}, 'Check Box9.1.1':{p:1,cx:573.5,cy:768.4},
+      'Check Box9.2.0':{p:1,cx:554.0,cy:748.9}, 'Check Box9.2.1':{p:1,cx:573.5,cy:748.9},
       'Check Box10':{p:1,cx:261.7,cy:701.2}, 'Check Box12':{p:1,cx:282.7,cy:701.7},
       'Check Box11':{p:1,cx:262.4,cy:683.4}, 'Check Box13':{p:1,cx:282.7,cy:682.7},
       // Página 2 — Alergias col izq SI/NO
