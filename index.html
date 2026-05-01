@@ -566,9 +566,9 @@ function buildFieldValues(ins) {
     const n = (num||'').replace(/\D/g,'');
     const full = c.length > 6 && n === '' ? c : c + n;
     if (full.length >= 8) {
-      return [full.slice(0, full.length - 8), full.slice(-8)];
+      return [full.slice(0, full.length - 8), ' ' + full.slice(-8)];
     }
-    return [c, n];
+    return [c, ' ' + n];
   }
   const [telFijoCod2, telFijo2] = splitTel(ins.telFijoCod, ins.telFijo);
   const [celCod2, cel2]         = splitTel(ins.celularCod,  ins.celular);
@@ -581,6 +581,9 @@ function buildFieldValues(ins) {
   tx('Text87', ins.cantHermanos); tx('Text86', ins.cantHermanosEsc);
   // SI_5/NO_5 = lenguas distintas (y=458)
   sino('SI_2','NO_3', ins.lenguasDistintas);
+  // SI_5/NO_5 = lengua indígena; SI_6/NO_6 = otra lengua
+  sino('SI_5','NO_5', ins.lenguaIndigena);
+  sino('SI_6','NO_6', ins.otraLengua);
   // SI_3/NO_4 = pueblos originarios (y=496)
   sino('SI_3','NO_4', ins.pueblosOriginarios);
   // Hijos menores: SI_9/NO_9 (y=590, x=195/225)
@@ -675,7 +678,7 @@ function buildFieldValues(ins) {
   tx('undefined_41', ins.cualMedicacion);
   // SI_21/NO_21 = operación (y=262, x=147/173)
   sino('SI_21','NO_21', ins.operacion);
-  tx('Text42', ins.motivoOperacion); // motivo operación — año no tiene campo en el PDF
+  tx('Text27', ins.motivoOperacion); // motivo operación → fila "¿por qué motivo?" en p2
 
   // Antecedentes familiares col izq (Muerte súbita, Diabetes, Problemas cardíacos) → Check Box29
   // col der (Tos crónica, Celiaquía) → Check Box35, Check Box36
@@ -703,7 +706,7 @@ function buildFieldValues(ins) {
   cb('Municipal',  t(ins.procDependencia)==='Municipal');
   cb('Nacional',   t(ins.procDependencia)==='Nacional');
   cb('Privada',    t(ins.procDependencia)==='Privada');
-  tx('Text27', ins.orientacion); // orientación (x0=175, y=494 en p2)
+  tx('Text42', ins.orientacion); // orientación → fila Orientación en p2
   // Text28 = año del establecimiento donde se inscribe (no lo tenemos, dejarlo vacío)
 
   // Inscripción
@@ -712,8 +715,9 @@ function buildFieldValues(ins) {
   cb('Ciclo Superior',                 ciclo==='Ciclo Superior');
   cb('Aula de Fortalecimiento',        ciclo==='Aula de Fortalecimiento');
   cb('Escuela Profesional Secundaria', ciclo==='Escuela Profesional Secundaria');
-  const am = {'1':'/1','2':'/2','3':'/3','4':'/4','5':'/5','6':'/6','7':'/7'};
-  fv.push({name:'Año',type:'radio',value:am[t(ins.anio)]||'/1'});
+  // Año: el PDF usa valores '1','2',...'7' (sin barra)
+  const am = {'1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7'};
+  fv.push({name:'Año',type:'radio',value:am[t(ins.anio)]||'1'});
   const turno=t(ins.turno);
   cb('Mañana',turno==='Mañana'); cb('Tarde',turno==='Tarde');
   cb('Vespertino',turno==='Vespertino'); cb('Noche',turno==='Noche');
@@ -879,6 +883,11 @@ window.generarPDF = async (id) => {
       'Check Box6.0.0':{p:0,cx:557.0,cy:71.2},  'Check Box6.0.1':{p:0,cx:576.5,cy:71.2},
       'Check Box6.1.0':{p:0,cx:557.4,cy:49.1},  'Check Box6.1.1':{p:0,cx:577.3,cy:49.1},
       'Check Box7.0'  :{p:0,cx:555.9,cy:24.7},  'Check Box7.1'  :{p:0,cx:576.2,cy:24.7},
+      // Página 1 — Lenguas indígenas/otras (SI_5..8)
+      'SI_5':{p:0,cx:206.5,cy:359.2}, 'NO_5':{p:0,cx:235.9,cy:359.2},
+      'SI_6':{p:0,cx:368.5,cy:359.2}, 'NO_6':{p:0,cx:397.9,cy:359.2},
+      'SI_7':{p:0,cx:233.7,cy:321.2}, 'NO_7':{p:0,cx:263.5,cy:321.2},
+      'SI_8':{p:0,cx:368.1,cy:320.9}, 'NO_8':{p:0,cx:398.0,cy:320.9},
       // SI/NO normales p1 (obra social, DNI, etc.)
       'SI_10':{p:0,cx:523.4,cy:245.4},  'NO_10':{p:0,cx:552.9,cy:245.4},
       'SI_11.0':{p:0,cx:110.6,cy:203.5},'NO_11':{p:0,cx:140.1,cy:203.4},
@@ -916,19 +925,19 @@ window.generarPDF = async (id) => {
       'Check Box9.2.0':{p:1,cx:554.0,cy:748.9}, 'Check Box9.2.1':{p:1,cx:573.5,cy:748.9},
       'Check Box10':{p:1,cx:261.7,cy:701.2}, 'Check Box12':{p:1,cx:282.7,cy:701.7},
       'Check Box11':{p:1,cx:262.4,cy:683.4}, 'Check Box13':{p:1,cx:282.7,cy:682.7},
-      // Página 2 — Alergias col izq SI/NO
+      // Página 2 — Alergias col izq SI/NO (Check Box14=SI, Check Box17=NO)
       'Check Box14':{p:1,cx:169.4,cy:630.5}, 'Check Box17':{p:1,cx:188.9,cy:631.2},
       'Check Box15':{p:1,cx:169.4,cy:614.0}, 'Check Box18':{p:1,cx:188.9,cy:614.0},
       'Check Box16':{p:1,cx:168.7,cy:598.2}, 'Check Box19':{p:1,cx:188.9,cy:599.0},
-      // Página 2 — Alergias internación col izq
+      // Página 2 — Alergias col izq internación (Check Box25=SI, Check Box26=NO)
       'Check Box25.0':{p:1,cx:508.3,cy:629.3}, 'Check Box26.0':{p:1,cx:538.3,cy:629.3},
       'Check Box25.1':{p:1,cx:508.3,cy:613.6}, 'Check Box26.1':{p:1,cx:538.3,cy:613.6},
       'Check Box25.2':{p:1,cx:508.3,cy:597.9}, 'Check Box26.2':{p:1,cx:538.3,cy:597.9},
-      // Página 2 — Alergias col der SI/NO
+      // Página 2 — Alergias col der SI/NO (Check Box20=SI, Check Box22=NO)
       'Check Box20.0':{p:1,cx:215.9,cy:629.3}, 'Check Box22.0':{p:1,cx:248.2,cy:629.8},
       'Check Box20.1':{p:1,cx:215.9,cy:613.6}, 'Check Box22.1':{p:1,cx:248.2,cy:613.1},
       'Check Box20.2':{p:1,cx:215.9,cy:597.9}, 'Check Box22.2':{p:1,cx:248.2,cy:597.4},
-      // Página 2 — Alergias internación col der
+      // Página 2 — Alergias col der internación (Check Box23=SI, Check Box24=NO)
       'Check Box23.0':{p:1,cx:460.3,cy:629.3}, 'Check Box24.0':{p:1,cx:480.6,cy:629.6},
       'Check Box23.1':{p:1,cx:460.3,cy:613.6}, 'Check Box24.1':{p:1,cx:480.6,cy:612.8},
       'Check Box23.2':{p:1,cx:460.3,cy:597.9}, 'Check Box24.2':{p:1,cx:480.6,cy:597.1},
