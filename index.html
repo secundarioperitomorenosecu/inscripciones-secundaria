@@ -566,7 +566,7 @@ function buildFieldValues(ins) {
     const n = (num||'').replace(/\D/g,'');
     const full = c.length > 6 && n === '' ? c : c + n;
     if (full.length >= 8) {
-      return [full.slice(0, full.length - 8), '   ' + full.slice(-8)];
+      return [full.slice(0, full.length - 8), '    ' + full.slice(-8)];
     }
     return [c, ' ' + n];
   }
@@ -676,7 +676,7 @@ function buildFieldValues(ins) {
   sino('SI_22','NO_22', ins.medicacion);
   tx('Text27', ins.motivoOperacion); // motivo operación
   tx('Text28', ins.anioOperacion);   // año operación
-  tx('Text30', ins.cualMedicacion);  // cuál medicación
+  tx('medicacion', ins.cualMedicacion);  // cuál medicación (campo agregado al PDF)
   // Disminución auditiva: SI_23/NO_23 | Usa audífonos: SI_24/NO_24
   sino('SI_23','NO_23', ins.dismAuditiva);
   sino('SI_24','NO_24', ins.usaAudifonos);
