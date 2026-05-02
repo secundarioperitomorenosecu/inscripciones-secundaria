@@ -773,21 +773,24 @@ function buildFieldValues(ins) {
   cb('Busca trabajo',                      r1a.includes('busca'));
   cb('Realiza tareas de cuidado no pagas', r1a.includes('cuidado'));
   cb('Recibe jubilación o pensión',        r1a.includes('jubilaci'));
-  // Convive R1: SI_36/NO_36 (y=662)
+  // Convive R1: SI_36/NO_36 (desde=662)
   const r1c=t(ins.r1convive)||'SI';
   cb('SI_36',r1c==='SI'); cb('NO_36',r1c==='NO');
-  // Domicilio R1 — mapeo confirmado: Text44=calle, Text45=numero, Text46=piso,
-  // Text47=torre, Text48=depto, Text49=entreCalle, Text50=yCalle, Text64=otroDato,
-  // Text65=provincia, Text66=distrito, Text67=localidad, Text63=email
-  tx('Text44',ins.r1calle);    tx('Text45',ins.r1numero);
-  tx('Text46',ins.r1piso);     tx('Text47',ins.r1torre);    tx('Text48',ins.r1depto);
-  tx('Text49',ins.r1entreCalle);tx('Text50',ins.r1yCalle);  tx('Text64',ins.r1otroDato);
-  tx('Text65',ins.r1provincia);tx('Text66',ins.r1distrito); tx('Text67',ins.r1localidad);
+  // Domicilio R1 — mapeo real confirmado página 3:
+  // desde=678: Text26=calle, Text29=numero, Text35=piso, Text36=torre, Text43=depto
+  // desde=697: Text44=entreCalle, Text45=yCalle, Text46=otroDato
+  // desde=718: Text47=provincia, Text48=distrito, Text49=localidad
+  // desde=738: Text51=telFijoCod, Text52=telFijo, Text53=celCod, Text54=celular
+  // desde=760: Text50=email
+  tx('Text26',ins.r1calle);    tx('Text29',ins.r1numero);
+  tx('Text35',ins.r1piso);     tx('Text36',ins.r1torre);    tx('Text43',ins.r1depto);
+  tx('Text44',ins.r1entreCalle);tx('Text45',ins.r1yCalle);  tx('Text46',ins.r1otroDato);
+  tx('Text47',ins.r1provincia);tx('Text48',ins.r1distrito); tx('Text49',ins.r1localidad);
   const [r1tfc,r1tf] = splitTel(ins.r1telFijoCod, ins.r1telFijo);
   const [r1cc,r1c2]  = splitTel(ins.r1celularCod,  ins.r1celular);
   tx('Text51',r1tfc); tx('Text52',r1tf);
   tx('Text53',r1cc);  tx('Text54',r1c2);
-  tx('Text63',ins.r1email);
+  tx('Text50',ins.r1email);
 
   // ══ PÁGINA 4: RESPONSABLE 2 ════════════════════════════════
   const v2=t(ins.r2vinculo);
