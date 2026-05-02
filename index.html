@@ -566,7 +566,7 @@ function buildFieldValues(ins) {
     const n = (num||'').replace(/\D/g,'');
     const full = c.length > 6 && n === '' ? c : c + n;
     if (full.length >= 8) {
-      return [full.slice(0, full.length - 8), ' ' + full.slice(-8)];
+      return [full.slice(0, full.length - 8), '   ' + full.slice(-8)];
     }
     return [c, ' ' + n];
   }
@@ -651,16 +651,20 @@ function buildFieldValues(ins) {
 
   // Alergias — SI_14/NO_14 = tiene alergia grave
   sino('SI_14','NO_14', ins.tieneAlergia);
-  // Tipos de alergia col izq: Check Box14=SI, Check Box17=NO + Check Box25/26=internación
-  // Tipos de alergia col der: Check Box20=SI, Check Box22=NO + Check Box23/24=internación
+  // Tipos de alergia
+  // Col izq: CB14=SI, CB17=NO (padece) | CB20.0/22.0=SI/NO internación
+  // Col der: CB15=SI Picaduras, CB18=NO Picaduras... NO: son Vacunas/Alimentos
+  // Según imagen: CB14=Medicamentos SI, CB17=Medicamentos NO
+  //               CB20.0/22.0 = internación Medicamentos SI/NO
+  // Col der Picaduras etc tienen sus propios campos (CB23/24/25/26)
   const al = ins.alergias || {};
   [
-    ['Medicamentos',                              'Check Box14',   'Check Box17',   'Check Box25.0','Check Box26.0'],
-    ['Vacunas',                                   'Check Box15',   'Check Box18',   'Check Box25.1','Check Box26.1'],
-    ['Alimentos',                                 'Check Box16',   'Check Box19',   'Check Box25.2','Check Box26.2'],
-    ['Picaduras de Insectos',                     'Check Box20.0', 'Check Box22.0', 'Check Box23.0','Check Box24.0'],
-    ['Estacionales (Polen, ácaros, polvo, etc.)','Check Box20.1', 'Check Box22.1', 'Check Box23.1','Check Box24.1'],
-    ['Otras',                                     'Check Box20.2', 'Check Box22.2', 'Check Box23.2','Check Box24.2'],
+    ['Medicamentos',                              'Check Box14',   'Check Box17',   'Check Box20.0','Check Box22.0'],
+    ['Vacunas',                                   'Check Box15',   'Check Box18',   'Check Box20.1','Check Box22.1'],
+    ['Alimentos',                                 'Check Box16',   'Check Box19',   'Check Box20.2','Check Box22.2'],
+    ['Picaduras de Insectos',                     'Check Box23.0', 'Check Box24.0', 'Check Box25.0','Check Box26.0'],
+    ['Estacionales (Polen, ácaros, polvo, etc.)','Check Box23.1', 'Check Box24.1', 'Check Box25.1','Check Box26.1'],
+    ['Otras',                                     'Check Box23.2', 'Check Box24.2', 'Check Box25.2','Check Box26.2'],
   ].forEach(([k,si,no,siI,noI]) => {
     const a=al[k]||{};
     cb(si,  a.padece==='SI'); cb(no,  a.padece==='NO');
@@ -670,8 +674,9 @@ function buildFieldValues(ins) {
   // Operación: SI_21/NO_21 | Medicación habitual: SI_22/NO_22
   sino('SI_21','NO_21', ins.operacion);
   sino('SI_22','NO_22', ins.medicacion);
-  tx('undefined_41', ins.cualMedicacion);
   tx('Text27', ins.motivoOperacion); // motivo operación
+  tx('Text28', ins.anioOperacion);   // año operación
+  tx('Text30', ins.cualMedicacion);  // cuál medicación
   // Disminución auditiva: SI_23/NO_23 | Usa audífonos: SI_24/NO_24
   sino('SI_23','NO_23', ins.dismAuditiva);
   sino('SI_24','NO_24', ins.usaAudifonos);
@@ -925,22 +930,20 @@ window.generarPDF = async (id) => {
       'Check Box9.2.0':{p:1,cx:554.0,cy:748.9}, 'Check Box9.2.1':{p:1,cx:573.5,cy:748.9},
       'Check Box10':{p:1,cx:261.7,cy:701.2}, 'Check Box12':{p:1,cx:282.7,cy:701.7},
       'Check Box11':{p:1,cx:262.4,cy:683.4}, 'Check Box13':{p:1,cx:282.7,cy:682.7},
-      // Página 2 — Alergias col izq SI/NO (Check Box14=SI, Check Box17=NO)
+      // Página 2 — Alergias col izq: CB14=SI padece, CB17=NO padece, CB20=SI intern, CB22=NO intern
       'Check Box14':{p:1,cx:169.4,cy:630.5}, 'Check Box17':{p:1,cx:188.9,cy:631.2},
       'Check Box15':{p:1,cx:169.4,cy:614.0}, 'Check Box18':{p:1,cx:188.9,cy:614.0},
       'Check Box16':{p:1,cx:168.7,cy:598.2}, 'Check Box19':{p:1,cx:188.9,cy:599.0},
-      // Página 2 — Alergias col izq internación (Check Box25=SI, Check Box26=NO)
-      'Check Box25.0':{p:1,cx:508.3,cy:629.3}, 'Check Box26.0':{p:1,cx:538.3,cy:629.3},
-      'Check Box25.1':{p:1,cx:508.3,cy:613.6}, 'Check Box26.1':{p:1,cx:538.3,cy:613.6},
-      'Check Box25.2':{p:1,cx:508.3,cy:597.9}, 'Check Box26.2':{p:1,cx:538.3,cy:597.9},
-      // Página 2 — Alergias col der SI/NO (Check Box20=SI, Check Box22=NO)
       'Check Box20.0':{p:1,cx:215.9,cy:629.3}, 'Check Box22.0':{p:1,cx:248.2,cy:629.8},
       'Check Box20.1':{p:1,cx:215.9,cy:613.6}, 'Check Box22.1':{p:1,cx:248.2,cy:613.1},
       'Check Box20.2':{p:1,cx:215.9,cy:597.9}, 'Check Box22.2':{p:1,cx:248.2,cy:597.4},
-      // Página 2 — Alergias col der internación (Check Box23=SI, Check Box24=NO)
+      // Página 2 — Alergias col der: CB23=SI padece, CB24=NO padece, CB25=SI intern, CB26=NO intern
       'Check Box23.0':{p:1,cx:460.3,cy:629.3}, 'Check Box24.0':{p:1,cx:480.6,cy:629.6},
       'Check Box23.1':{p:1,cx:460.3,cy:613.6}, 'Check Box24.1':{p:1,cx:480.6,cy:612.8},
       'Check Box23.2':{p:1,cx:460.3,cy:597.9}, 'Check Box24.2':{p:1,cx:480.6,cy:597.1},
+      'Check Box25.0':{p:1,cx:508.3,cy:629.3}, 'Check Box26.0':{p:1,cx:538.3,cy:629.3},
+      'Check Box25.1':{p:1,cx:508.3,cy:613.6}, 'Check Box26.1':{p:1,cx:538.3,cy:613.6},
+      'Check Box25.2':{p:1,cx:508.3,cy:597.9}, 'Check Box26.2':{p:1,cx:538.3,cy:597.9},
       // Página 2 — Antecedentes familiares col der (Tos/Celiaquía)
       'Check Box35.0':{p:1,cx:552.5,cy:419.4}, 'Check Box35.1':{p:1,cx:572.0,cy:419.4},
       'Check Box36.0':{p:1,cx:552.5,cy:402.9}, 'Check Box36.1':{p:1,cx:572.0,cy:402.9},
