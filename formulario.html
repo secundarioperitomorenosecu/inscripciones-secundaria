@@ -104,6 +104,24 @@ header{background:var(--az);color:#fff;position:sticky;top:0;z-index:100;box-sha
   <p>Completá el formulario con los datos del/la estudiante y los/las responsables. Al terminar, la escuela recibirá la solicitud automáticamente. <strong>No hace falta imprimir nada.</strong></p>
 </div></div>
 
+<!-- Bloque de edición por DNI -->
+<div class="ic" id="bloqueEditar" style="border-left-color:#2557b0;margin-bottom:24px;">
+  <div class="ii">✏️</div>
+  <div style="width:100%">
+    <h2>¿Ya enviaste el formulario y querés modificarlo?</h2>
+    <p style="margin-bottom:10px;">Ingresá el DNI del/la estudiante para cargar los datos y editarlos.</p>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <input type="text" id="dniEditar" placeholder="DNI sin puntos (ej: 44123456)"
+        style="border:1.5px solid #d0d7e6;border-radius:6px;padding:9px 11px;font-size:.88rem;flex:1;">
+      <button type="button" id="btnCargarDni"
+        style="background:#1a3a6b;color:#fff;border:none;border-radius:6px;padding:9px 18px;cursor:pointer;font-size:.88rem;white-space:nowrap;">
+        Cargar datos
+      </button>
+    </div>
+    <p id="msgEditar" style="font-size:.8rem;color:#c0392b;margin-top:6px;display:none;"></p>
+  </div>
+</div>
+
 <form id="f" novalidate>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -1000,14 +1018,15 @@ header{background:var(--az);color:#fff;position:sticky;top:0;z-index:100;box-sha
   <div class="grd">✅</div>
   <h2>¡Solicitud enviada!</h2>
   <p>Los datos fueron registrados correctamente.<br>La escuela se comunicará con ustedes.<br><br>
-  <strong>Número de referencia:</strong><span class="rn" id="refNum"></span></p>
+  <strong>N° de DNI registrado:</strong><span class="rn" id="refNum"></span><br><br>
+  <em style="font-size:.85rem;color:#555;">Recuerde que para editar este formulario deberá ingresar el documento del menor.</em></p>
 </div>
 </div>
 <div class="tst" id="toast"></div>
 
 <script type="module">
 import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp }
+import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, setDoc, doc }
                             from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 
@@ -1278,13 +1297,29 @@ document.getElementById('f').addEventListener('submit', async e => {
       restTipoDoc: v('restTipoDoc'), restNroDoc: v('restNroDoc'),
       restDescripcion: v('restDescripcion'),
       // ── META ──
-      timestamp: serverTimestamp(), estado: 'pendiente'
+      timestamp: serverTimestamp(), estado: 'pendiente',
+      cicloLectivo: new Date().getFullYear().toString()
     };
 
-    const ref = await addDoc(collection(db,'inscripciones'), datos);
+    // Buscar si ya existe un registro con este DNI
+    const q = query(collection(db,'inscripciones'), where('numeroDni','==', datos.numeroDni));
+    const snap = await getDocs(q);
+    let docRef;
+    if (!snap.empty) {
+      // Sobreescribir el registro existente si está pendiente, o crear uno nuevo si fue procesado
+      const existing = snap.docs[0];
+      if (existing.data().estado === 'pendiente') {
+        await setDoc(doc(db,'inscripciones', existing.id), datos);
+        docRef = existing;
+      } else {
+        docRef = await addDoc(collection(db,'inscripciones'), datos);
+      }
+    } else {
+      docRef = await addDoc(collection(db,'inscripciones'), datos);
+    }
     document.getElementById('f').style.display='none';
     document.getElementById('exito').style.display='block';
-    document.getElementById('refNum').textContent = ref.id.substring(0,8).toUpperCase();
+    document.getElementById('refNum').textContent = datos.numeroDni;
     document.getElementById('pgr').style.width='100%';
     window.scrollTo({top:0,behavior:'smooth'});
   } catch(err) {
@@ -1294,6 +1329,77 @@ document.getElementById('f').addEventListener('submit', async e => {
     document.getElementById('btnTxt').textContent='📨 Enviar Solicitud de Inscripción';
   }
 });
+// ── CARGAR DATOS POR DNI PARA EDICIÓN ─────────────────────────
+document.getElementById('btnCargarDni').addEventListener('click', async () => {
+  const dni = document.getElementById('dniEditar').value.trim().replace(/\D/g,'');
+  const msg = document.getElementById('msgEditar');
+  if (!dni || dni.length < 7) {
+    msg.textContent = 'Ingresá un DNI válido.';
+    msg.style.display = 'block';
+    return;
+  }
+  msg.style.display = 'none';
+  document.getElementById('btnCargarDni').textContent = 'Buscando...';
+  document.getElementById('btnCargarDni').disabled = true;
+
+  try {
+    const q = query(collection(db,'inscripciones'), where('numeroDni','==', dni));
+    const snap = await getDocs(q);
+    if (snap.empty) {
+      msg.textContent = 'No se encontró ninguna inscripción con ese DNI.';
+      msg.style.display = 'block';
+    } else {
+      const data = snap.docs[0].data();
+      if (data.estado !== 'pendiente') {
+        msg.textContent = 'Esta inscripción ya fue procesada por la escuela y no puede modificarse.';
+        msg.style.display = 'block';
+      } else {
+        // Pre-rellenar todos los campos
+        const set = (id, val) => { const el = document.getElementById(id); if(el && val !== undefined) el.value = val||''; };
+        const setBtn = (name, val) => { document.querySelectorAll(`[data-name="${name}"]`).forEach(b => { b.classList.toggle('ss', b.dataset.val === val); }); };
+
+        // Estudiante
+        set('apellido', data.apellido); set('nombre', data.nombre);
+        set('fechaNac', data.fechaNac); set('genero', data.genero);
+        set('lugarNac', data.lugarNac); set('nacionalidad', data.nacionalidad);
+        set('provinciaNac', data.provinciaNac);
+        set('tieneDni', data.tieneDni); set('numeroDni', data.numeroDni);
+        set('cuil', data.cuil);
+        // Domicilio
+        set('calle', data.calle); set('numero', data.numero);
+        set('piso', data.piso); set('torre', data.torre); set('depto', data.depto);
+        set('entreCalle', data.entreCalle); set('yCalle', data.yCalle);
+        set('provincia', data.provincia); set('distrito', data.distrito); set('localidad', data.localidad);
+        set('telFijoCod', data.telFijoCod); set('telFijo', data.telFijo);
+        set('celularCod', data.celularCod); set('celular', data.celular);
+        // Inscripción
+        set('ciclo', data.ciclo); set('orientacion', data.orientacion);
+        set('anio', data.anio); set('turno', data.turno); set('jornada', data.jornada);
+        // Responsable 1
+        set('r1vinculo', data.r1vinculo); set('r1apellido', data.r1apellido);
+        set('r1nombre', data.r1nombre); set('r1nac', data.r1nac);
+        set('r1dni', data.r1dni); set('r1email', data.r1email);
+        set('r1celularCod', data.r1celularCod); set('r1celular', data.r1celular);
+        // Responsable 2
+        set('r2vinculo', data.r2vinculo); set('r2apellido', data.r2apellido);
+        set('r2nombre', data.r2nombre); set('r2nac', data.r2nac);
+        set('r2dni', data.r2dni); set('r2email', data.r2email);
+        set('r2celularCod', data.r2celularCod); set('r2celular', data.r2celular);
+
+        // Scroll al formulario y mostrar aviso
+        document.getElementById('bloqueEditar').style.borderLeftColor = '#1a7a4a';
+        document.getElementById('bloqueEditar').querySelector('h2').textContent = '✅ Datos cargados — modificá lo que necesites y volvé a enviar';
+        document.getElementById('bloqueEditar').querySelector('p').textContent = '';
+        document.getElementById('dniEditar').disabled = true;
+        document.getElementById('btnCargarDni').style.display = 'none';
+        document.getElementById('f').scrollIntoView({behavior:'smooth'});
+      }
+    }
+  } catch(e) {
+    msg.textContent = 'Error al buscar. Verificá tu conexión.';
+    msg.style.display = 'block';
+  }
+  document.getElementById('btnCargarDni').textContent = 'Cargar datos';
+  document.getElementById('btnCargarDni').disabled = false;
+});
 </script>
-</body>
-</html>
