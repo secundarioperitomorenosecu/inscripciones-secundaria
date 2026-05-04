@@ -1302,15 +1302,13 @@ document.getElementById('f').addEventListener('submit', async e => {
     };
 
     // Buscar si ya existe un registro con este DNI
-    const q = query(collection(db,'inscripciones'), where('numeroDni','==', datos.numeroDni));
-    const snap = await getDocs(q);
+    const snap = await getDocs(collection(db,'inscripciones'));
+    const existingDoc = snap.docs.find(d => d.data().numeroDni === datos.numeroDni);
     let docRef;
-    if (!snap.empty) {
-      // Sobreescribir el registro existente si está pendiente, o crear uno nuevo si fue procesado
-      const existing = snap.docs[0];
-      if (existing.data().estado === 'pendiente') {
-        await setDoc(doc(db,'inscripciones', existing.id), datos);
-        docRef = existing;
+    if (existingDoc) {
+      if (existingDoc.data().estado === 'pendiente') {
+        await setDoc(doc(db,'inscripciones', existingDoc.id), datos);
+        docRef = existingDoc;
       } else {
         docRef = await addDoc(collection(db,'inscripciones'), datos);
       }
@@ -1343,13 +1341,13 @@ document.getElementById('btnCargarDni').addEventListener('click', async () => {
   document.getElementById('btnCargarDni').disabled = true;
 
   try {
-    const q = query(collection(db,'inscripciones'), where('numeroDni','==', dni));
-    const snap = await getDocs(q);
-    if (snap.empty) {
+    const snap = await getDocs(collection(db,'inscripciones'));
+    const encontrado = snap.docs.find(d => d.data().numeroDni === dni);
+    if (!encontrado) {
       msg.textContent = 'No se encontró ninguna inscripción con ese DNI.';
       msg.style.display = 'block';
     } else {
-      const data = snap.docs[0].data();
+      const data = encontrado.data();
       if (data.estado !== 'pendiente') {
         msg.textContent = 'Esta inscripción ya fue procesada por la escuela y no puede modificarse.';
         msg.style.display = 'block';
