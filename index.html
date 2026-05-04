@@ -308,53 +308,55 @@ let docSeleccionado = null;
 const _urlParams = new URLSearchParams(window.location.search);
 const _autoImprimir = _urlParams.get('imprimir');
 if (_autoImprimir) {
-  // Ocultar login y panel, mostrar solo mensaje de descarga
   document.addEventListener('DOMContentLoaded', () => {
+    // Reemplazar todo el body con pantalla simple
     document.body.innerHTML = `
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
-        min-height:100vh;font-family:sans-serif;background:#f0f4ff;gap:16px;">
+      <div id="autoImprimirScreen" style="display:flex;flex-direction:column;align-items:center;
+        justify-content:center;min-height:100vh;font-family:sans-serif;background:#f0f4ff;gap:16px;padding:20px;text-align:center;">
         <div style="font-size:3rem;">📄</div>
-        <h2 style="color:#1a3a6b;margin:0;">Preparando tu formulario...</h2>
-        <p style="color:#555;">La descarga comenzará en unos segundos.</p>
+        <h2 id="autoMsg" style="color:#1a3a6b;margin:0;">Preparando tu formulario...</h2>
+        <p id="autoSub" style="color:#555;">La descarga comenzará en unos segundos.</p>
       </div>`;
-    // Importar getDoc y generar PDF
-    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
-      .then(({ getDoc, doc: fsDoc }) => getDoc(fsDoc(db, 'inscripciones', _autoImprimir)))
-      .then(snap => {
-        if (snap.exists()) {
-          inscripciones = [{ id: snap.id, ...snap.data() }];
-          return generarPDF(snap.id);
-        }
-      })
-      .then(() => {
-        document.querySelector('h2').textContent = '¡Listo!';
-        document.querySelector('p').textContent = 'Descargamos tu formulario. Solo falta imprimirlo y firmarlo.';
-      })
-      .catch(e => {
-        document.querySelector('p').textContent = 'Error al generar el formulario. Por favor contactá a la escuela.';
-      });
   });
 }
 
 // ── AUTH ──────────────────────────────────────────────────────
-onAuthStateChanged(auth, user => {
-  if (user && user.email === EMAIL_AUTORIZADO) {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('appScreen').style.display = 'block';
-    document.getElementById('userName').textContent = user.displayName || user.email;
-    document.getElementById('userAvatar').textContent = (user.displayName || 'D')[0].toUpperCase();
-    cargarInscripciones();
-  } else if (user) {
-    signOut(auth);
-    document.getElementById('loginError').style.display = 'block';
+if (!_autoImprimir) {
+  onAuthStateChanged(auth, user => {
+    if (user && user.email === EMAIL_AUTORIZADO) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('appScreen').style.display = 'block';
+      document.getElementById('userName').textContent = user.displayName || user.email;
+      document.getElementById('userAvatar').textContent = (user.displayName || 'D')[0].toUpperCase();
+      cargarInscripciones();
+    } else if (user) {
+      signOut(auth);
+      document.getElementById('loginError').style.display = 'block';
+    }
+  });
+  document.getElementById('btnGoogle').addEventListener('click', () => signInWithPopup(auth, provider).catch(() => {}));
+  document.getElementById('btnLogout').addEventListener('click', () => signOut(auth).then(() => {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('appScreen').style.display = 'none';
+  }));
+} else {
+  // Modo auto-imprimir: cargar documento y generar PDF sin auth
+  const { getDoc, doc: fsDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+  try {
+    const snap = await getDoc(fsDoc(db, 'inscripciones', _autoImprimir));
+    if (snap.exists()) {
+      inscripciones = [{ id: snap.id, ...snap.data() }];
+      await generarPDF(snap.id);
+      document.getElementById('autoMsg').textContent = '¡Listo!';
+      document.getElementById('autoSub').textContent = 'Descargamos tu formulario. Solo falta imprimirlo y firmarlo.';
+    } else {
+      document.getElementById('autoSub').textContent = 'No se encontró el formulario. Contactá a la escuela.';
+    }
+  } catch(e) {
+    document.getElementById('autoSub').textContent = 'Error al generar. Contactá a la escuela.';
+    console.error(e);
   }
-});
-
-document.getElementById('btnGoogle').addEventListener('click', () => signInWithPopup(auth, provider).catch(() => {}));
-document.getElementById('btnLogout').addEventListener('click', () => signOut(auth).then(() => {
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('appScreen').style.display = 'none';
-}));
+}
 
 // ── CARGAR DATOS ──────────────────────────────────────────────
 async function cargarInscripciones() {
