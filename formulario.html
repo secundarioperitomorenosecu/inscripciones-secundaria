@@ -1020,6 +1020,12 @@ header{background:var(--az);color:#fff;position:sticky;top:0;z-index:100;box-sha
   <p>Los datos fueron registrados correctamente.<br>La escuela se comunicará con ustedes.<br><br>
   <strong>N° de DNI registrado:</strong><span class="rn" id="refNum"></span><br><br>
   <em style="font-size:.85rem;color:#555;">Recuerde que para editar este formulario deberá ingresar el documento del menor.</em></p>
+  <a id="linkPDF" href="#" target="_blank"
+    style="display:inline-block;margin-top:16px;background:#1a3a6b;color:#fff;
+    padding:12px 24px;border-radius:8px;text-decoration:none;font-size:.95rem;font-weight:600;">
+    📄 Descargar mi formulario
+  </a>
+  <p style="font-size:.8rem;color:#666;margin-top:8px;">¡Listo! Solo falta imprimirlo y firmarlo.</p>
 </div>
 </div>
 <div class="tst" id="toast"></div>
@@ -1319,6 +1325,9 @@ document.getElementById('f').addEventListener('submit', async e => {
     document.getElementById('exito').style.display='block';
     document.getElementById('refNum').textContent = datos.numeroDni;
     document.getElementById('pgr').style.width='100%';
+    // Setear link de descarga del PDF
+    const docId = docRef.id || docRef;
+    document.getElementById('linkPDF').href = `index.html?imprimir=${docId}`;
     window.scrollTo({top:0,behavior:'smooth'});
   } catch(err) {
     console.error(err);
