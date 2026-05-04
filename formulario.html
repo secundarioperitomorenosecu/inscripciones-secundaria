@@ -1352,37 +1352,156 @@ document.getElementById('btnCargarDni').addEventListener('click', async () => {
         msg.textContent = 'Esta inscripción ya fue procesada por la escuela y no puede modificarse.';
         msg.style.display = 'block';
       } else {
-        // Pre-rellenar todos los campos
-        const set = (id, val) => { const el = document.getElementById(id); if(el && val !== undefined) el.value = val||''; };
-        const setBtn = (name, val) => { document.querySelectorAll(`[data-name="${name}"]`).forEach(b => { b.classList.toggle('ss', b.dataset.val === val); }); };
+        // ── FUNCIONES DE PRE-RELLENO ──────────────────────────────
 
-        // Estudiante
+        // Campo de texto/select normal
+        const set = (id, val) => {
+          const el = document.getElementById(id);
+          if (el && val !== undefined && val !== null) el.value = val||'';
+        };
+
+        // Botón SI/NO (.sb2) — simula el click para activar estilos y condicionales
+        const setBtn = (f, val) => {
+          const btn = document.querySelector(`.sb2[data-f="${f}"][data-v="${val}"]`);
+          if (btn) btn.click();
+        };
+
+        // Radio button (internaciones, grillas)
+        const setRad = (name, val) => {
+          if (!val) return;
+          const r = document.querySelector(`input[name="${name}"][value="${val}"]`);
+          if (r) { r.checked = true; r.dispatchEvent(new Event('change')); }
+        };
+
+        // Checkbox múltiple (transporte, actividad)
+        const setChk = (name, val) => {
+          if (!val) return;
+          const vals = val.split(', ');
+          document.querySelectorAll(`input[name="${name}"]`).forEach(c => {
+            c.checked = vals.includes(c.value);
+          });
+        };
+
+        // ── ESTUDIANTE ────────────────────────────────────────────
         set('apellido', data.apellido); set('nombre', data.nombre);
         set('fechaNac', data.fechaNac); set('genero', data.genero);
         set('lugarNac', data.lugarNac); set('nacionalidad', data.nacionalidad);
         set('provinciaNac', data.provinciaNac);
+        set('distritoNac', data.distritoNac); set('localidadNac', data.localidadNac);
         set('tieneDni', data.tieneDni); set('numeroDni', data.numeroDni);
         set('cuil', data.cuil);
-        // Domicilio
+        setBtn('hijosmenores', data.hijosmenores);
+        set('salaMaternal', data.salaMaternal);
+        setBtn('tieneHermanos', data.tieneHermanos);
+        set('cantHermanos', data.cantHermanos); set('cantHermanosEsc', data.cantHermanosEsc);
+        setBtn('lenguasDistintas', data.lenguasDistintas);
+        setBtn('lenguaIndigena', data.lenguaIndigena);
+        setBtn('otraLengua', data.otraLengua);
+        set('otraLenguaTexto', data.otraLenguaTexto);
+        setBtn('pueblosOriginarios', data.pueblosOriginarios);
+        setBtn('auh', data.auh);
+        setBtn('progresar', data.progresar);
+        setChk('transporte', data.transporte);
+
+        // ── DOMICILIO ESTUDIANTE ──────────────────────────────────
         set('calle', data.calle); set('numero', data.numero);
         set('piso', data.piso); set('torre', data.torre); set('depto', data.depto);
         set('entreCalle', data.entreCalle); set('yCalle', data.yCalle);
+        set('otroDato', data.otroDato);
         set('provincia', data.provincia); set('distrito', data.distrito); set('localidad', data.localidad);
         set('telFijoCod', data.telFijoCod); set('telFijo', data.telFijo);
         set('celularCod', data.celularCod); set('celular', data.celular);
-        // Inscripción
+        actualizarNacBsAs(); actualizarDistritoLocalidad();
+
+        // ── SALUD ─────────────────────────────────────────────────
+        setBtn('obraSocial', data.obraSocial);
+        set('nombreObraSocial', data.nombreObraSocial); set('nroAfiliado', data.nroAfiliado);
+        // Grillas: salud, ejercicio, familiar
+        const salud = data.salud || {};
+        COND_SALUD.forEach((c,i) => setRad(`sal_${i}`, salud[c]));
+        const ejercicio = data.ejercicio || {};
+        COND_EJERCICIO.forEach((c,i) => setRad(`eje_${i}`, ejercicio[c]));
+        const familiar = data.antecFamiliar || {};
+        COND_FAMILIAR.forEach((c,i) => setRad(`fam_${i}`, familiar[c]));
+        // Internaciones
+        setRad('internComun', data.internComun);
+        setRad('internIntensivos', data.internIntensivos);
+        set('cantInternaciones', data.cantInternaciones);
+        set('causaInternacion', data.causaInternacion);
+        // Alergias
+        setBtn('tieneAlergia', data.tieneAlergia);
+        const alergias = data.alergias || {};
+        TIPOS_ALERGIA.forEach((a,i) => {
+          const al = alergias[a] || {};
+          setRad(`alg_${i}`, al.padece);
+          setRad(`algInt_${i}`, al.internacion);
+        });
+        // Medicación, operación, disminución
+        setBtn('medicacion', data.medicacion);
+        set('cualMedicacion', data.cualMedicacion);
+        setBtn('operacion', data.operacion);
+        set('motivoOperacion', data.motivoOperacion); set('anioOperacion', data.anioOperacion);
+        setBtn('dismAuditiva', data.dismAuditiva);
+        setBtn('usaAudifonos', data.usaAudifonos);
+        setBtn('dismVisual', data.dismVisual);
+        setBtn('usaLentes', data.usaLentes);
+
+        // ── INSCRIPCIÓN ───────────────────────────────────────────
         set('ciclo', data.ciclo); set('orientacion', data.orientacion);
-        set('anio', data.anio); set('turno', data.turno); set('jornada', data.jornada);
-        // Responsable 1
+        set('anio', data.anio); set('turno', data.turno);
+        set('jornada', data.jornada); set('condicion', data.condicion);
+        set('procPais', data.procPais); set('procProvincia', data.procProvincia);
+        set('procDistrito', data.procDistrito); set('procNivel', data.procNivel);
+        set('procSector', data.procSector); set('procDependencia', data.procDependencia);
+        set('procEscuela', data.procEscuela);
+        setBtn('proyectoInclusion', data.proyectoInclusion);
+        set('tipoInclusion', data.tipoInclusion);
+        setBtn('acompAsistente', data.acompAsistente);
+        setBtn('asisteCec', data.asisteCec);
+        setBtn('asisteCef', data.asisteCef);
+        setBtn('asisteEstetica', data.asisteEstetica);
+        setChk('servAlim', data.servAlim);
+
+        // ── RESPONSABLE 1 ─────────────────────────────────────────
         set('r1vinculo', data.r1vinculo); set('r1apellido', data.r1apellido);
         set('r1nombre', data.r1nombre); set('r1nac', data.r1nac);
-        set('r1dni', data.r1dni); set('r1email', data.r1email);
+        set('r1tieneDni', data.r1tieneDni); set('r1dni', data.r1dni);
+        set('r1ocupacion', data.r1ocupacion);
+        set('r1nivelEduc', data.r1nivelEduc);
+        setBtn('r1asistioEduc', data.r1asistioEduc);
+        setBtn('r1completoNivel', data.r1completoNivel);
+        setChk('r1act', data.r1actividad);
+        setBtn('r1convive', data.r1convive||'SI');
+        set('r1calle', data.r1calle); set('r1numero', data.r1numero);
+        set('r1piso', data.r1piso); set('r1torre', data.r1torre); set('r1depto', data.r1depto);
+        set('r1entreCalle', data.r1entreCalle); set('r1yCalle', data.r1yCalle);
+        set('r1provincia', data.r1provincia); set('r1distrito', data.r1distrito); set('r1localidad', data.r1localidad);
+        set('r1telFijoCod', data.r1telFijoCod); set('r1telFijo', data.r1telFijo);
         set('r1celularCod', data.r1celularCod); set('r1celular', data.r1celular);
-        // Responsable 2
+        set('r1email', data.r1email);
+
+        // ── RESPONSABLE 2 ─────────────────────────────────────────
         set('r2vinculo', data.r2vinculo); set('r2apellido', data.r2apellido);
         set('r2nombre', data.r2nombre); set('r2nac', data.r2nac);
-        set('r2dni', data.r2dni); set('r2email', data.r2email);
+        set('r2tieneDni', data.r2tieneDni); set('r2dni', data.r2dni);
+        set('r2ocupacion', data.r2ocupacion);
+        set('r2nivelEduc', data.r2nivelEduc);
+        setBtn('r2asistioEduc', data.r2asistioEduc);
+        setBtn('r2completoNivel', data.r2completoNivel);
+        setChk('r2act', data.r2actividad);
+        setBtn('r2convive', data.r2convive||'SI');
+        set('r2calle', data.r2calle); set('r2numero', data.r2numero);
+        set('r2piso', data.r2piso); set('r2torre', data.r2torre); set('r2depto', data.r2depto);
+        set('r2entreCalle', data.r2entreCalle); set('r2yCalle', data.r2yCalle);
+        set('r2provincia', data.r2provincia); set('r2distrito', data.r2distrito); set('r2localidad', data.r2localidad);
+        set('r2telFijoCod', data.r2telFijoCod); set('r2telFijo', data.r2telFijo);
         set('r2celularCod', data.r2celularCod); set('r2celular', data.r2celular);
+        set('r2email', data.r2email);
+
+        // ── RESTRICCIONES ─────────────────────────────────────────
+        set('restApellido', data.restApellido); set('restNombre', data.restNombre);
+        set('restTipoDoc', data.restTipoDoc); set('restNroDoc', data.restNroDoc);
+        set('restDescripcion', data.restDescripcion);
 
         // Scroll al formulario y mostrar aviso
         document.getElementById('bloqueEditar').style.borderLeftColor = '#1a7a4a';
