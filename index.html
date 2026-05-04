@@ -225,7 +225,11 @@
           <option value="Vespertino">Vespertino</option>
           <option value="Noche">Noche</option>
         </select>
+        <select id="filtroCiclo">
+          <option value="">Todos los ciclos</option>
+        </select>
         <button class="btn-primary" id="btnRefresh">↺ Actualizar</button>
+        <button class="btn-acento" id="btnExcelExport">📥 Excel</button>
       </div>
 
       <!-- TABLA -->
@@ -327,6 +331,7 @@ async function cargarInscripciones() {
     const snap = await getDocs(q);
     inscripciones = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     actualizarStats();
+    poblarFiltroCiclo();
     renderTabla();
   } catch(e) {
     showToast('Error al cargar datos', 'error');
@@ -349,17 +354,29 @@ function actualizarStats() {
   document.getElementById('btnDescargarTodos').style.display = inscripciones.length > 0 ? 'flex' : 'none';
 }
 
+// ── CICLO LECTIVO ─────────────────────────────────────────────
+function poblarFiltroCiclo() {
+  const ciclos = [...new Set(inscripciones.map(i => i.cicloLectivo).filter(Boolean))].sort().reverse();
+  const sel = document.getElementById('filtroCiclo');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Todos los ciclos</option>' +
+    ciclos.map(c => `<option value="${c}">${c}</option>`).join('');
+  if (current) sel.value = current;
+}
+
 // ── TABLA ─────────────────────────────────────────────────────
 function renderTabla() {
   const texto  = document.getElementById('filtroTexto').value.toLowerCase();
   const estado = document.getElementById('filtroEstado').value;
   const turno  = document.getElementById('filtroTurno').value;
+  const ciclo  = document.getElementById('filtroCiclo').value;
 
   const filtrados = inscripciones.filter(i => {
-    const match = !texto || `${i.apellido} ${i.nombre} ${i.numeroDni}`.toLowerCase().includes(texto);
+    const match  = !texto  || `${i.apellido} ${i.nombre} ${i.numeroDni}`.toLowerCase().includes(texto);
     const matchE = !estado || i.estado === estado;
     const matchT = !turno  || i.turno === turno;
-    return match && matchE && matchT;
+    const matchC = !ciclo  || i.cicloLectivo === ciclo;
+    return match && matchE && matchT && matchC;
   });
 
   const tbody = document.getElementById('tablaBody');
@@ -380,7 +397,7 @@ function renderTabla() {
       <td>${i.numeroDni || '—'}</td>
       <td>${i.anio || '—'}° · ${i.turno || '—'}</td>
       <td>${i.r1nombre || '—'} ${i.r1apellido || ''}</td>
-      <td>${i.r1celular || i.r1celularCod || '—'}</td>
+      <td>${i.r1celular || '—'}</td>
       <td>${fecha}</td>
       <td>${badge}</td>
       <td><div class="td-actions">
@@ -391,9 +408,70 @@ function renderTabla() {
   }).join('');
 }
 
-['filtroTexto','filtroEstado','filtroTurno'].forEach(id =>
+['filtroTexto','filtroEstado','filtroTurno','filtroCiclo'].forEach(id =>
   document.getElementById(id).addEventListener('input', renderTabla)
 );
+
+// ── EXPORTAR EXCEL ────────────────────────────────────────────
+document.getElementById('btnExcelExport').addEventListener('click', () => {
+  const ciclo = document.getElementById('filtroCiclo').value;
+  const datos = ciclo
+    ? inscripciones.filter(i => i.cicloLectivo === ciclo)
+    : inscripciones;
+
+  if (datos.length === 0) { showToast('No hay datos para exportar', 'error'); return; }
+
+  const cols = [
+    ['Ciclo Lectivo','cicloLectivo'],['Apellido','apellido'],['Nombre','nombre'],
+    ['DNI','numeroDni'],['CUIL','cuil'],['Fecha Nac.','fechaNac'],['Género','genero'],
+    ['Nacionalidad','nacionalidad'],['Calle','calle'],['Número','numero'],
+    ['Piso','piso'],['Torre','torre'],['Depto','depto'],
+    ['Entre calle','entreCalle'],['Y calle','yCalle'],
+    ['Provincia','provincia'],['Distrito','distrito'],['Localidad','localidad'],
+    ['Tel. Fijo cód.','telFijoCod'],['Tel. Fijo','telFijo'],
+    ['Celular cód.','celularCod'],['Celular','celular'],
+    ['Ciclo','ciclo'],['Orientación','orientacion'],['Año','anio'],
+    ['Turno','turno'],['Jornada','jornada'],['Condición','condicion'],
+    ['Obra Social','obraSocial'],['Nombre Obra Social','nombreObraSocial'],
+    ['AUH','auh'],['Progresar','progresar'],['Transporte','transporte'],
+    ['R1 Vínculo','r1vinculo'],['R1 Apellido','r1apellido'],['R1 Nombre','r1nombre'],
+    ['R1 Nacionalidad','r1nac'],['R1 DNI','r1dni'],['R1 Email','r1email'],
+    ['R1 Celular cód.','r1celularCod'],['R1 Celular','r1celular'],
+    ['R1 Convive','r1convive'],['R1 Actividad','r1actividad'],
+    ['R1 Calle','r1calle'],['R1 Número','r1numero'],
+    ['R1 Provincia','r1provincia'],['R1 Distrito','r1distrito'],['R1 Localidad','r1localidad'],
+    ['R2 Vínculo','r2vinculo'],['R2 Apellido','r2apellido'],['R2 Nombre','r2nombre'],
+    ['R2 DNI','r2dni'],['R2 Email','r2email'],
+    ['R2 Celular cód.','r2celularCod'],['R2 Celular','r2celular'],
+    ['R2 Convive','r2convive'],['R2 Actividad','r2actividad'],
+    ['R2 Calle','r2calle'],['R2 Número','r2numero'],
+    ['R2 Provincia','r2provincia'],['R2 Distrito','r2distrito'],['R2 Localidad','r2localidad'],
+    ['Restricción Apellido','restApellido'],['Restricción Nombre','restNombre'],
+    ['Restricción Descripción','restDescripcion'],
+    ['Estado','estado'],['Fecha envío','_fecha'],
+  ];
+
+  // Construir CSV con BOM para que Excel lo abra bien con tildes
+  const bom = '\uFEFF';
+  const header = cols.map(([h]) => `"${h}"`).join(',');
+  const rows = datos.map(i => {
+    const fecha = i.timestamp ? new Date(i.timestamp.seconds*1000).toLocaleDateString('es-AR') : '';
+    return cols.map(([,k]) => {
+      const val = k === '_fecha' ? fecha : (i[k] ?? '');
+      return `"${String(val).replace(/"/g,'""')}"`;
+    }).join(',');
+  });
+  const csv = bom + [header, ...rows].join('\n');
+
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `inscripciones${ciclo ? '_'+ciclo : ''}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`Excel exportado (${datos.length} registros) ✓`, 'ok');
+});
 
 // ── MODAL DETALLE ─────────────────────────────────────────────
 window.verDetalle = (id) => {
