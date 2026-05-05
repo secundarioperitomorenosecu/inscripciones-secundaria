@@ -1032,7 +1032,7 @@ header{background:var(--az);color:#fff;position:sticky;top:0;z-index:100;box-sha
 
 <script type="module">
 import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, setDoc, doc }
+import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, setDoc, doc, getDoc }
                             from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 
@@ -1304,7 +1304,14 @@ document.getElementById('f').addEventListener('submit', async e => {
       restDescripcion: v('restDescripcion'),
       // ── META ──
       timestamp: serverTimestamp(), estado: 'pendiente',
-      cicloLectivo: new Date().getFullYear().toString()
+      // Leer ciclo activo de Firestore
+      let cicloLectivo = new Date().getFullYear().toString();
+      try {
+        const cicloSnap = await getDoc(doc(db, 'config', 'cicloActivo'));
+        if (cicloSnap.exists()) cicloLectivo = cicloSnap.data().ciclo;
+      } catch(e) { /* usar año actual como fallback */ }
+
+      cicloLectivo: cicloLectivo
     };
 
     // Buscar si ya existe un registro con este DNI
