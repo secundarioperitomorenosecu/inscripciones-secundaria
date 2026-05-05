@@ -189,6 +189,17 @@
       </div>
     </div>
 
+    <!-- CICLO ACTIVO -->
+    <div style="background:#eaf0ff;border:1.5px solid #c0d0f0;border-radius:8px;padding:12px 20px;
+      margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <span style="font-size:.9rem;color:#1a3a6b;">📅 <strong>Ciclo de inscripción activo:</strong>
+        <span id="cicloActivoLabel" style="font-size:1.1rem;font-weight:700;color:#1a3a6b;margin-left:6px;">—</span>
+      </span>
+      <button id="btnAbrirCiclo" class="btn-primary" style="font-size:.82rem;padding:6px 14px;">
+        Cambiar ciclo
+      </button>
+    </div>
+
     <div class="content">
       <!-- STATS -->
       <div class="stats-grid">
@@ -277,7 +288,7 @@
 
 <script type="module">
 import { initializeApp }           from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, updateDoc, query, orderBy }
+import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, setDoc, getDoc, query, orderBy }
                                    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged }
                                    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -420,6 +431,7 @@ function renderTabla() {
       <td><div class="td-actions">
         <button class="btn-ver btn-sm" onclick="verDetalle('${i.id}')">👁 Ver</button>
         <button class="btn-pdf btn-sm" id="pdfbtn_${i.id}" onclick="generarPDF('${i.id}')">⬇ PDF</button>
+        <button class="btn-sm" style="background:#e74c3c;color:#fff;border:none;border-radius:5px;padding:6px 10px;cursor:pointer;font-size:.8rem;" onclick="borrarInscripcion('${i.id}', '${i.apellido} ${i.nombre}')">🗑</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -1148,7 +1160,52 @@ function showToast(msg, type='') {
   setTimeout(() => t.className = 'toast', 3000);
 }
 
-// ── EJECUTAR AUTO-IMPRIMIR (aquí generarPDF ya está definida) ─
+// ── BORRAR INSCRIPCIÓN ────────────────────────────────────────
+window.borrarInscripcion = async (id, nombre) => {
+  if (!confirm(`¿Estás seguro que querés borrar la inscripción de ${nombre}?\nEsta acción no se puede deshacer.`)) return;
+  try {
+    await deleteDoc(doc(db, 'inscripciones', id));
+    inscripciones = inscripciones.filter(i => i.id !== id);
+    actualizarStats();
+    renderTabla();
+    showToast(`Inscripción de ${nombre} eliminada ✓`, 'ok');
+  } catch(e) {
+    showToast('Error al eliminar. Intentá de nuevo.', 'error');
+    console.error(e);
+  }
+};
+
+// ── CICLO ACTIVO ──────────────────────────────────────────────
+const CONFIG_DOC = doc(db, 'config', 'cicloActivo');
+
+async function cargarCicloActivo() {
+  try {
+    const snap = await getDoc(CONFIG_DOC);
+    const ciclo = snap.exists() ? snap.data().ciclo : new Date().getFullYear().toString();
+    document.getElementById('cicloActivoLabel').textContent = ciclo;
+  } catch(e) { console.error(e); }
+}
+
+document.getElementById('btnAbrirCiclo').addEventListener('click', async () => {
+  const actual = document.getElementById('cicloActivoLabel').textContent;
+  const nuevo = prompt('Ingresá el ciclo lectivo a activar (ej: 2027):', actual);
+  if (!nuevo || !/^\d{4}$/.test(nuevo.trim())) {
+    if (nuevo !== null) alert('Ingresá un año válido (4 dígitos).');
+    return;
+  }
+  try {
+    await setDoc(CONFIG_DOC, { ciclo: nuevo.trim() });
+    document.getElementById('cicloActivoLabel').textContent = nuevo.trim();
+    showToast(`Ciclo ${nuevo.trim()} activado ✓`, 'ok');
+  } catch(e) {
+    showToast('Error al guardar. Intentá de nuevo.', 'error');
+    console.error(e);
+  }
+});
+
+cargarCicloActivo();
+
+
 if (_autoImprimir) {
   (async () => {
     try {
