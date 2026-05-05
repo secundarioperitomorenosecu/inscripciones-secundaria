@@ -1156,14 +1156,13 @@ if (_autoImprimir) {
       const snap = await getDoc(fsDoc(db, 'inscripciones', _autoImprimir));
       if (snap.exists()) {
         inscripciones = [{ id: snap.id, ...snap.data() }];
-        await generarPDF(snap.id);
+        try { await generarPDF(snap.id); } catch(e2) { /* ignorar errores de toast */ }
         document.getElementById('autoMsg').textContent = '¡Listo!';
         document.getElementById('autoSub').textContent = 'Descargamos tu formulario. Solo falta imprimirlo y firmarlo.';
       } else {
         document.getElementById('autoSub').textContent = 'No se encontró el formulario. Contactá a la escuela.';
       }
     } catch(e) {
-      document.getElementById('autoSub').textContent = 'Error al generar. Contactá a la escuela.';
       console.error(e);
     }
   })();
