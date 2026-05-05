@@ -1304,14 +1304,7 @@ document.getElementById('f').addEventListener('submit', async e => {
       restDescripcion: v('restDescripcion'),
       // ── META ──
       timestamp: serverTimestamp(), estado: 'pendiente',
-      // Leer ciclo activo de Firestore
-      let cicloLectivo = new Date().getFullYear().toString();
-      try {
-        const cicloSnap = await getDoc(doc(db, 'config', 'cicloActivo'));
-        if (cicloSnap.exists()) cicloLectivo = cicloSnap.data().ciclo;
-      } catch(e) { /* usar año actual como fallback */ }
-
-      cicloLectivo: cicloLectivo
+      cicloLectivo: new Date().getFullYear().toString()
     };
 
     // Buscar si ya existe un registro con este DNI
