@@ -425,7 +425,7 @@ function renderTabla() {
       <td>${i.numeroDni || '—'}</td>
       <td>${i.anio || '—'}° · ${i.turno || '—'}</td>
       <td>${i.r1nombre || '—'} ${i.r1apellido || ''}</td>
-      <td>${i.r1celular || i.r1celularCod || '—'}</td>
+      <td>${i.r1celular || '—'}</td>
       <td>${fecha}</td>
       <td>${badge}</td>
       <td><div class="td-actions">
@@ -790,18 +790,20 @@ function buildFieldValues(ins) {
     cb(siI, a.internacion==='SI'); cb(noI, a.internacion==='NO');
   });
 
-  // Operación: SI_21/NO_21 | Medicación habitual: SI_22/NO_22
-  sino('SI_21','NO_21', ins.operacion);
-  sino('SI_22','NO_22', ins.medicacion);
-  tx('Text27', ins.motivoOperacion); // motivo operación
-  tx('Text28', ins.anioOperacion);   // año operación
-  tx('medicacion', ins.cualMedicacion);  // cuál medicación (campo agregado al PDF)
-  // Disminución auditiva: SI_23/NO_23 | Usa audífonos: SI_24/NO_24
-  sino('SI_23','NO_23', ins.dismAuditiva);
-  sino('SI_24','NO_24', ins.usaAudifonos);
-  // Disminución visual: SI_25/"NO En caso af" | Usa lentes: SI_26/NO_25
-  sino('SI_25','NO En caso af', ins.dismVisual);
-  sino('SI_26','NO_25', ins.usaLentes);
+  // Según imagen verificada:
+  // SI_21(cy=573) = dismAuditiva | SI_22(cy=573) = usaAudifonos
+  // SI_23(cy=553) = dismVisual   | SI_24(cy=553) = usaLentes
+  // SI_25(cy=532) = medicacion
+  // SI_26(cy=512) = operacion
+  sino('SI_21','NO_21', ins.dismAuditiva);
+  sino('SI_22','NO_22', ins.usaAudifonos);
+  sino('SI_23','NO_23', ins.dismVisual);
+  sino('SI_24','NO_24', ins.usaLentes);
+  sino('SI_25','NO En caso af', ins.medicacion);
+  tx('medicacion', ins.cualMedicacion);
+  sino('SI_26','NO_25', ins.operacion);
+  tx('Text27', ins.motivoOperacion);
+  tx('Text28', ins.anioOperacion);
 
   // Antecedentes familiares col izq (Muerte súbita, Diabetes, Problemas cardíacos) → Check Box29
   // col der (Tos crónica, Celiaquía) → Check Box35, Check Box36
