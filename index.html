@@ -304,7 +304,7 @@ const firebaseConfig = {
   messagingSenderId: "284569368518",
   appId:             "1:284569368518:web:a357c006b165236da4a4c7"
 };
-const EMAIL_AUTORIZADO = "secundarioperitomoreno@gmail.com";
+const EMAILS_AUTORIZADOS = ["secundarioperitomoreno@gmail.com", "colegioperitomoreno.rl@gmail.com"];
 // ══════════════════════════════════════════════════════════════
 
 const app  = initializeApp(firebaseConfig);
@@ -334,7 +334,7 @@ if (_autoImprimir) {
 // ── AUTH ──────────────────────────────────────────────────────
 if (!_autoImprimir) {
   onAuthStateChanged(auth, user => {
-    if (user && user.email === EMAIL_AUTORIZADO) {
+    if (user && EMAILS_AUTORIZADOS.includes(user.email)) {
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('appScreen').style.display = 'block';
       document.getElementById('userName').textContent = user.displayName || user.email;
